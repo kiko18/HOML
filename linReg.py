@@ -21,7 +21,12 @@ y = tf.constant(housing.target.reshape(-1,1), dtype=tf.float32, name="y")
 
 #creata node that will compute theta
 XT = tf.transpose(X)
-theta = tf.matmul(tf.matmul(tf.matrix_inverse(tf.matmul(XT,y)), XT), y)
+theta = tf.matmul(tf.matmul(np.linalg.inv(tf.matmul(XT,X)), XT), y)
 
 #evaluate theta
 print(theta.eval)
+
+'''
+The main advantage of running this code versus computing the normal equation directely using Numpy is that tensorflow
+will automatically run this on you GPU card if you have one ( assuming you installed it with GPU support)
+'''
