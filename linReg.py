@@ -30,3 +30,16 @@ print(theta.eval)
 The main advantage of running this code versus computing the normal equation directely using Numpy is that tensorflow
 will automatically run this on you GPU card if you have one ( assuming you installed it with GPU support)
 '''
+
+
+'''
+Let use Batch gradient descent instead of normal equation
+(When using GD remember that it is important to first normalize the input vectors, or else training may be much slower.
+This an be done using Tensorflow, numpy, scikitLearn's standardScaler or any other solution you prefer.)
+'''
+from sklearn.preprocessing import StandardScaler
+scaled_data = StandardScaler().fit_transform(housing.data)
+#Verify that the mean of each feature (column) is 0
+print(scaled_data.mean(axis = 0))
+#Verify that the std of each feature (column) is 1
+print(scaled_data.std(axis = 0))
