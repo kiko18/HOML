@@ -14,10 +14,14 @@ housing = fetch_california_housing()
 m, n = housing.data.shape
 housing_data_plus_bias = np.c_[np.ones((m, 1)), housing.data]
 
+'''
+Normal Equation
+---------------
+'''
+
 #create 2 nodes to hold the data and target
 X = tf.constant(housing_data_plus_bias, dtype=tf.float32, name="X")
 y = tf.constant(housing.target.reshape(-1,1), dtype=tf.float32, name="y")
-
 
 #creata node that will compute theta
 XT = tf.transpose(X)
@@ -33,13 +37,45 @@ will automatically run this on you GPU card if you have one ( assuming you insta
 
 
 '''
+Gradient Descent
+-----------------
 Let use Batch gradient descent instead of normal equation
 (When using GD remember that it is important to first normalize the input vectors, or else training may be much slower.
 This an be done using Tensorflow, numpy, scikitLearn's standardScaler or any other solution you prefer.)
 '''
 from sklearn.preprocessing import StandardScaler
-scaled_data = StandardScaler().fit_transform(housing.data)
+scaled_housing_data_plus_bias = StandardScaler().fit_transform(housing_data_plus_bias)
 #Verify that the mean of each feature (column) is 0
-print(scaled_data.mean(axis = 0))
+print(scaled_housing_data_plus_bias.mean(axis = 0))
 #Verify that the std of each feature (column) is 1
-print(scaled_data.std(axis = 0))
+print(scaled_housing_data_plus_bias.std(axis = 0))
+
+n_epochs = 1000
+learning_rate = 0.01
+
+#define Feature matrix and response matrix as constant
+X = tf.constant(scaled_housing_data_plus_bias, dtype=tf.float32, name="X")
+y = tf.constant(housing.target.reshape(-1,1), dtype=tf.float32, name="y")
+#initialise theta with uniform random value between -1 and 1
+theta = tf.Variable(tf.random.uniform([n+1, 1], -1.0, 1.0), name = "theta")
+
+
+@tf.function
+def train():
+    #compute prediction
+    y_pred = tf.matmul(X, theta, name="predictions")
+    #compute mean square error
+    error = y_pred - y
+    mse = tf.reduce_mean(tf.square(error), name="mse")
+    #compute the gradient
+    gradients = 2/m * tf.matmul(tf.transpose(X), error)
+    #update theta
+    theta.assign(theta - learning_rate * gradients)  
+    return mse
+    
+    
+#gradient descent
+for epoch in range(n_epochs):
+    mse = train()
+    if(epoch % 100 == 0):   #for each 100 epoch
+        print("Epoch", epoch, "MSE=", mse.eval)
