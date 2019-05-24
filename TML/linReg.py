@@ -51,9 +51,54 @@ plt.show()
 
 #randomly divide data into training and test set
 def split_train_test(data, test_ratio):
+    np.random.seed((42))
     shuffled_indices = np.random.permutation(len(data))
     test_set_size = int(len(data)  *test_ratio)
     test_indices = shuffled_indices[:test_set_size]
     train_indices = shuffled_indices[test_set_size:]
     return data.iloc[train_indices], data.iloc[test_indices]
+
+
+'''
+Supose we have chatted with experts who told us that the median income is a very important attribute 
+to predict median housing price. We may want to ensure that the test set is representative of the various
+categories of incomes in the whole datasets. Since the median income is a continous numerical attribute, 
+we first need to create an income category attribute.
+'''
+#create an incoming category attribute
+# Divide by 1.5 to limit the number of income categories
+housing["income_cat"] = np.ceil(housing["median_income"] / 1.5)
+# Label those above 5 as 5
+housing["income_cat"].where(housing["income_cat"] < 5, 5.0, inplace=True)
+
+
+#Do stratified sampling 
+from sklearn.model_selection import StratifiedShuffleSplit
+split = StratifiedShuffleSplit(n_splits = 1, test_size=0.2, random_state=42)
+
+for train_index, test_index in split.split(housing, housing["income_cat"]):
+    strat_train_set = housing.loc[train_index]
+    strat_test_set = housing.loc[test_index]
     
+'''
+To see if this worked as expected we can look at the income category proportions 
+in the full housing dataset. This should almost identical to the income category proportions 
+in the training and test set
+'''
+print(housing["income_cat"].value_counts() / len(housing))
+print(strat_train_set["income_cat"].value_counts() / len(strat_train_set))
+print(strat_test_set["income_cat"].value_counts() / len(strat_test_set))
+
+'''
+If we check these proportion for the test set generated via purely random sampling,
+we will see that it is quite skewed
+'''
+from sklearn.model_selection import train_test_split
+train_set, test_set = train_test_split(housing, test_size=0.2, random_state=42)
+print(housing["income_cat"].value_counts() / len(housing))
+print(train_set["income_cat"].value_counts() / len(train_set))
+print(test_set["income_cat"].value_counts() / len(test_set))
+
+#we remove the income_cat so the data is back to its original state
+for set_ in (strat_train_set, strat_test_set):
+    set_.drop("income_cat", axis=1, inplace=True)
