@@ -9,26 +9,33 @@ Created on Tue May 21 15:08:07 2019
 import numpy as np
 import tensorflow as tf
 from sklearn.datasets import fetch_california_housing
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
 
 housing = fetch_california_housing()
 m, n = housing.data.shape
 housing_data_plus_bias = np.c_[np.ones((m, 1)), housing.data]
+X_train, X_test, y_train, y_test = train_test_split(
+        housing_data_plus_bias, housing.target, test_size=0.33, random_state=42)
 
 '''
 Normal Equation
 ---------------
 '''
+#initialize feature and response matrix
+X = tf.constant(X_train, dtype=tf.float32, name="X")
+y = tf.constant(y_train.reshape(-1,1), dtype=tf.float32, name="y")
 
-#create 2 nodes to hold the data and target
-X = tf.constant(housing_data_plus_bias, dtype=tf.float32, name="X")
-y = tf.constant(housing.target.reshape(-1,1), dtype=tf.float32, name="y")
-
-#creata node that will compute theta
+#compute theta
 XT = tf.transpose(X)
 theta = tf.matmul(tf.matmul(np.linalg.inv(tf.matmul(XT,X)), XT), y)
 
 #evaluate theta
 print(theta.eval)
+
+#make some prediction
+print(mean_squared_error(y, tf.matmul(X, theta)))
+print(mean_squared_error(y_test, tf.matmul(tf.constant(X_test, dtype=tf.float32), theta)))
 
 '''
 The main advantage of running this code versus computing the normal equation directely using Numpy is that tensorflow
@@ -53,7 +60,7 @@ print(scaled_housing_data_plus_bias.std(axis = 0))
 n_epochs = 1000
 learning_rate = 0.01
 
-#define Feature matrix and response matrix as constant
+#Initialise Feature and response matrix
 X = tf.constant(scaled_housing_data_plus_bias, dtype=tf.float32, name="X")
 y = tf.constant(housing.target.reshape(-1,1), dtype=tf.float32, name="y")
 #initialise theta with uniform random value between -1 and 1
@@ -79,3 +86,5 @@ for epoch in range(n_epochs):
     mse = train()
     if(epoch % 100 == 0):   #for each 100 epoch
         print("Epoch", epoch, "MSE=", mse.eval)
+
+print(mean_squared_error(y, tf.matmul(X, theta)))
