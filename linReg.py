@@ -66,18 +66,34 @@ y = tf.constant(housing.target.reshape(-1,1), dtype=tf.float32, name="y")
 #initialise theta with uniform random value between -1 and 1
 theta = tf.Variable(tf.random.uniform([n+1, 1], -1.0, 1.0), name = "theta")
 
+mse = tf.Variable(tf.zeros([10]))
+
 
 @tf.function
 def train():
     #compute prediction
     y_pred = tf.matmul(X, theta, name="predictions")
-    #compute mean square error
+    #compute mean square error (cost)
     error = y_pred - y
     mse = tf.reduce_mean(tf.square(error), name="mse")
-    #compute the gradient
-    gradients = 2/m * tf.matmul(tf.transpose(X), error)
+    #compute the gradient of the cost wrt theta
+    #gradients = 2/m * tf.matmul(tf.transpose(X), error)
+    gradients = tf.gradients(mse, [theta])[0]
     #update theta
     theta.assign(theta - learning_rate * gradients)  
+    return mse
+
+
+@tf.function
+def train2():
+    #compute prediction
+    y_pred = tf.matmul(X, theta, name="predictions")
+    #compute mean square error (cost)
+    error = y_pred - y
+    mse = tf.reduce_mean(tf.square(error), name="mse")
+    #compute the gradient of the cost wrt theta
+    optimizer = tf.compat.v1.train.GradientDescentOptimizer(learning_rate=learning_rate)
+    optimizer.minimize(mse)
     return mse
     
     
