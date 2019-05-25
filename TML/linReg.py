@@ -16,7 +16,7 @@ HOUSING_PATH = os.path.join("datasets", "housing")
 HOUSING_URL = DOWNLOAD_ROOT + "datasets/housing/housing.tgz"
 
 '''
-Create a datasets/housing directory in your workspace, 
+This fct create a datasets/housing directory in your workspace, 
 download the housing.tgz file and extracts the housing.csv from it
 '''
 def fetch_housing_data(housing_url=HOUSING_URL, housing_path=HOUSING_PATH):
@@ -29,7 +29,9 @@ def fetch_housing_data(housing_url=HOUSING_URL, housing_path=HOUSING_PATH):
     housing_tgz.close()
     
 
-
+'''
+Load the califormia housing data from a repository
+'''
 def load_housing_data(housing_path=HOUSING_PATH):
     csv_path = os.path.join(housing_path, "housing.csv")
     return pd.read_csv(csv_path)
@@ -53,7 +55,7 @@ plt.show()
 def split_train_test(data, test_ratio):
     np.random.seed((42))
     shuffled_indices = np.random.permutation(len(data))
-    test_set_size = int(len(data)  *test_ratio)
+    test_set_size = int(len(data) * test_ratio)
     test_indices = shuffled_indices[:test_set_size]
     train_indices = shuffled_indices[test_set_size:]
     return data.iloc[train_indices], data.iloc[test_indices]
@@ -70,9 +72,13 @@ we first need to create an income category attribute.
 housing["income_cat"] = np.ceil(housing["median_income"] / 1.5)
 # Label those above 5 as 5
 housing["income_cat"].where(housing["income_cat"] < 5, 5.0, inplace=True)
+print(housing["income_cat"].value_counts())
 
 
 #Do stratified sampling 
+#for a usa data set on gender whit 48% men and 52% femele, 
+#the goal of stratified sampling will be todivise the dataset such that the proportion 
+#of man an femele are maintaint in both training and testset
 from sklearn.model_selection import StratifiedShuffleSplit
 split = StratifiedShuffleSplit(n_splits = 1, test_size=0.2, random_state=42)
 
@@ -81,13 +87,15 @@ for train_index, test_index in split.split(housing, housing["income_cat"]):
     strat_test_set = housing.loc[test_index]
     
 '''
-To see if this worked as expected we can look at the income category proportions 
-in the full housing dataset. This should almost identical to the income category proportions 
+To see if this worked as expected we can look at the income category proportions in the 
+full housing dataset. This should almost identical to the income category proportions 
 in the training and test set
 '''
+print("-----------------------------_")
 print(housing["income_cat"].value_counts() / len(housing))
 print(strat_train_set["income_cat"].value_counts() / len(strat_train_set))
 print(strat_test_set["income_cat"].value_counts() / len(strat_test_set))
+print("-----------------------------_")
 
 '''
 If we check these proportion for the test set generated via purely random sampling,
