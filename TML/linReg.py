@@ -110,3 +110,76 @@ print(test_set["income_cat"].value_counts() / len(test_set))
 #we remove the income_cat so the data is back to its original state
 for set_ in (strat_train_set, strat_test_set):
     set_.drop("income_cat", axis=1, inplace=True)
+    
+
+'''
+Now we will explore the data a little more in depth.
+We will only work with the traning set.
+In case the training set is very large, one often create an exploratory set to make 
+manipulation easy and fast
+'''
+#we make a copy of the trainingset so we can explore it without harming the original
+housing = strat_train_set.copy()
+
+#in this pot it is hard to see any pattern
+housing.plot(kind="scatter", x="longitude", y="latitude")
+#here we can see where is a high density area
+#namely the bay area and around Los Angeles and San Diego
+#as well as a fairly high density in the central valley
+#in paticular around sacramento and fresno
+housing.plot(kind="scatter", x="longitude", y="latitude", alpha=0.1)
+
+#we now look at the housing prices, represented by the color
+#we use a predefined color map (option cmap) called jet, which range from 
+#blue(low value) to red(heigh price)
+#we can see that the prices are related to the location (close to the ocean)
+housing.plot(kind="scatter", x="longitude", y="latitude", alpha=0.4,
+    s=housing["population"]/100, label="population", figsize=(10,7),
+    c="median_house_value", cmap=plt.get_cmap("jet"), colorbar=True,
+    sharex=False)
+plt.legend()
+
+'''
+Now we will investigates the correlation  between attributes.
+We can compute the standart correlation coefficient (also called pearson's r)
+between every pair of attribues using the corr() methods)
+Note that the correlation coef only measure linear correlation (if x goes up, y goes up/down)
+'''
+corr_matrix = housing.corr()
+
+#we can for example look how much each attribute correlates with the median house value
+#the correlation coef range from -1 to 1.  1 indicate a strong positive corelation.
+#for example, the median house tend to go up when the median income goes up
+#-1 indicates a strong negative coefficient. For example between the latitude 
+#and the median house value (i.e prices have a slight tendency to goes down when you go north)
+#Finally, coef close to zero means that there is no linear corelation
+corr_matrix["median_house_value"]
+
+'''
+Another way to check for correlation between attributes is to use the pandas scatter_matrix,
+which plot every numerical attribute again each other.
+Since we have 11 atribut, we will get 11*11 = 121 plot, which is too much. 
+Let focus on some promising attribue that seem most correlated with median house value.
+'''
+
+from pandas.plotting import scatter_matrix
+attributes = ["median_house_value", "median_income", "total_rooms",
+              "housing_median_age"]
+scatter_matrix(housing[attributes], figsize=(12,8))
+
+
+'''
+we can see that the most promising attribute to predict median_house value is 
+the median_income (strong upward trend). If we zoom at it, we see that the plot
+reveal some not obvious straight lines: around 500k, 450k, 350k.
+We may try to remove the corresponding districts to prevent our algorithms from
+learning to reproduce this data quirks.
+'''
+housing.plot(kind="scatter", x="median_income", y="median_house_value", alpha=0.1)
+
+
+
+
+
+
+
