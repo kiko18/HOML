@@ -64,3 +64,19 @@ so multiple sessions can share the same variable
 '''
 
 
+'''
+placeholder:
+placeholder is a way to hold a place for a variable that we will specify later on using
+the feed_dict mechanism.
+-we must specify the tensor data type
+-optionally we can specify the shape (None means any size)
+'''
+A = tf.placeholder(tf.float32, shape=(None, 3))
+B = A + 5
+
+with tf.Session() as sess:
+    B1 = B.eval(feed_dict = {A: [[1,2,3]]})
+    B2 = B.eval(feed_dict = {A: [[4,5,6], [7,8,9]]})
+    
+print(B1)
+print(B2)
