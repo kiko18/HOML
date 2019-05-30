@@ -112,7 +112,7 @@ with tf.Session() as sess:
             #print("Epoch", epoch, "MSE=", mse.eval()) #you need to feed x and y
     #theta does not depend on X and y so we don't need to feed them here 
     best_theta = theta.eval()
-    save_path = saver.save(sess, "C:/Users/BT\Documents/others/tf_models/my_linReg_model.ckpt")
+    save_path = saver.save(sess, "C:/Users/BT/Documents/others/tf_models/my_linReg_model.ckpt")
 
 print('\n best_theta = \n', best_theta)
 
