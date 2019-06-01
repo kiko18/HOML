@@ -5,6 +5,11 @@ Created on Tue May 21 15:08:07 2019
 
 @author: basil
 """
+from datetime import datetime
+
+now = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+root_logdir = "C:/Users/BT/Documents/others/tf/tf_boards/tf_logs"
+logdir = "{}/run-{}/".format(root_logdir, now)
 
 import numpy as np
 import tensorflow as tf
@@ -54,7 +59,9 @@ This an be done using Tensorflow, numpy, scikitLearn's standardScaler or any oth
 '''
 
 from sklearn.preprocessing import StandardScaler
-scaled_housing_data_plus_bias = StandardScaler().fit_transform(housing_data_plus_bias)
+scaled_housing_data = StandardScaler().fit_transform(housing.data)
+scaled_housing_data_plus_bias = np.c_[np.ones((m, 1)), scaled_housing_data]
+
 #Verify that the mean of each feature (column) is 0
 print(scaled_housing_data_plus_bias.mean(axis = 0))
 #Verify that the std of each feature (column) is 1
@@ -71,7 +78,8 @@ n_batches = int(np.ceil(m/batch_size))
 X = tf.placeholder(tf.float32, shape=(None, n+1), name="X") #n+1 because of the bias
 y = tf.placeholder(tf.float32, shape=(None, 1), name="y")
 #initialise theta with uniform random value between -1 and 1
-theta = tf.Variable(tf.random.uniform([n+1, 1], -1.0, 1.0), name = "theta")
+#theta = tf.Variable(tf.random.uniform([n+1, 1], -1.0, 1.0), seed=42, name = "theta")
+theta = tf.Variable(tf.random_uniform([n + 1, 1], -1.0, 1.0, seed=42), name="theta")
 #compute prediction
 y_pred = tf.matmul(X, theta, name="predictions")
 #compute mean square error (cost)
@@ -89,8 +97,22 @@ optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
 training_op = optimizer.minimize(mse)
 
 init = tf.global_variables_initializer()
+#create a saver node
 saver = tf.train.Saver()
 #saver = tf.train.Saver({"weights": theta}) if you only want to save theta
+
+# Create a node in the graph that will evaluate MSE and write it to a tensorBoard-compatible binary log string
+#called summary.
+mse_summary = tf.summary.scalar('MSE', mse)
+
+#create a FileWriter that we will use to write summaries to logfiles in the log directory
+#First param = path to the log dir (defined at the begining of this script)
+#second param= graph we want to visualize
+#Note: the FileWriter create the log dir if it doesn't exist, and write the graph definition in 
+#a binary logfile called an even file
+file_writer = tf.summary.FileWriter(logdir, tf.get_default_graph())
+
+
 '''
 Execution phase
 '''
@@ -98,8 +120,12 @@ Execution phase
 
 def fetch_batch(epoch, batch_index, batch_size):
     #load the data from disk
-    X_batch = scaled_housing_data_plus_bias[batch_size*batch_index : batch_size*(batch_index+1) - 1,:]
-    y_batch = housing.target.reshape(-1,1)[batch_size*batch_index : batch_size*(batch_index+1) - 1,:]
+    #X_batch = scaled_housing_data_plus_bias[batch_size*batch_index : batch_size*(batch_index+1) - 1,:]
+    #y_batch = housing.target.reshape(-1,1)[batch_size*batch_index : batch_size*(batch_index+1) - 1,:]
+    np.random.seed(epoch * n_batches + batch_index)  # not shown in the book
+    indices = np.random.randint(m, size=batch_size)  # not shown
+    X_batch = scaled_housing_data_plus_bias[indices] # not shown
+    y_batch = housing.target.reshape(-1, 1)[indices] # not shown
     return X_batch, y_batch
 
 with tf.Session() as sess:
@@ -107,14 +133,30 @@ with tf.Session() as sess:
     for epoch in range(n_epochs):
         for batch_index in range(n_batches):
             X_batch, y_batch = fetch_batch(epoch, batch_index, batch_size)
+            #Evaluate the mse_summary node regulary during training. 
+            #This output a summary that we can then write to the events file using file_wrier
+            if(batch_index % 10) == 0:  #every 10 minibatch
+                summary_str = mse_summary.eval(feed_dict = {X: X_batch, y:y_batch})
+                step = epoch * n_batches + batch_index
+                file_writer.add_summary(summary_str, step)
             sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
-        #if(epoch % 100 == 0):   #for each 100 epoch
+        if(epoch % 100 == 0):   #for each 100 epoch
             #print("Epoch", epoch, "MSE=", mse.eval()) #you need to feed x and y
+            #save checkpoint at regular intervals
+            save_path = saver.save(sess, "C:/Users/BT/Documents/others/tf/tf_models/temp/my_linReg_model_intermediate.ckpt")
+
     #theta does not depend on X and y so we don't need to feed them here 
     best_theta = theta.eval()
-    save_path = saver.save(sess, "C:/Users/BT/Documents/others/tf_models/my_linReg_model.ckpt")
+    save_path = saver.save(sess, "C:/Users/BT/Documents/others/tf/tf_models/my_linReg_model.ckpt")
 
 print('\n best_theta = \n', best_theta)
 
 
-tf.reset_default_graph()
+file_writer.close()
+
+
+#pip show tensorflow
+#Location: c:\programdata\anaconda3\lib\site-packages 
+#cd c:\programdata\anaconda3\lib\site-packages
+#cd tensorboard 
+#python main.py --logdir=C:\Users\BT\Documents\others\tf\tf_boards\tf_logs\
