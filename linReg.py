@@ -4,6 +4,8 @@
 Created on Tue May 21 15:08:07 2019
 
 @author: basil
+
+pip install opencv-python
 """
 from datetime import datetime
 
