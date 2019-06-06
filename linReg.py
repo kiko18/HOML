@@ -9,9 +9,9 @@ pip install opencv-python
 """
 from datetime import datetime
 
-now = datetime.utcnow().strftime("%Y%m%d%H%M%S")
-root_logdir = "C:/Users/BT/Documents/others/tf/tf_boards/tf_logs"
-logdir = "{}/run-{}/".format(root_logdir, now)
+now = datetime.utcnow().strftime("%Y%m%d%H%M%S") 
+root_logdir = "C:/Users/BT/Documents/others/tf/tf_boards/tf_logs" #the directory is created if it doesnt exist
+logdir = "{}/run-{}/".format(root_logdir, now) #the log dir is different at each run
 
 import numpy as np
 import tensorflow as tf
@@ -21,7 +21,7 @@ from sklearn.metrics import mean_squared_error
 
 housing = fetch_california_housing()
 m, n = housing.data.shape
-housing_data_plus_bias = np.c_[np.ones((m, 1)), housing.data]
+
 #split the data
 #X_train, X_test, y_train, y_test = train_test_split(housing.data, housing.target, test_size=0.33, random_state=42)
 
@@ -29,6 +29,10 @@ housing_data_plus_bias = np.c_[np.ones((m, 1)), housing.data]
 Normal Equation
 ---------------
 '''
+
+'''
+housing_data_plus_bias = np.c_[np.ones((m, 1)), housing.data]
+
 #initialize feature and response matrix
 X = tf.constant(housing_data_plus_bias, dtype=tf.float32, name="X")
 y = tf.constant(housing.target.reshape(-1,1), dtype=tf.float32, name="y")
@@ -46,7 +50,7 @@ with tf.Session() as sess:
 print("\n theta normal equation= \n", theta_value)
 print(loss_value)
 
-'''
+
 The main advantage of running this code versus computing the normal equation directely using Numpy is that tf
 will automatically run this on you GPU card if you have one ( assuming you installed it with GPU support)
 '''
@@ -69,7 +73,9 @@ print(scaled_housing_data_plus_bias.mean(axis = 0))
 #Verify that the std of each feature (column) is 1
 print(scaled_housing_data_plus_bias.std(axis = 0))
 
-n_epochs = 1000
+
+#hpyerparams
+n_epochs = 10
 learning_rate = 0.01
 batch_size = 100
 n_batches = int(np.ceil(m/batch_size))
@@ -104,7 +110,9 @@ saver = tf.train.Saver()
 #saver = tf.train.Saver({"weights": theta}) if you only want to save theta
 
 # Create a node in the graph that will evaluate MSE and write it to a tensorBoard-compatible binary log string
-#called summary.
+#called summary. This is a way to log/debug training stats:
+# we add a node to evaluate the MSE -> we evaluate it in the execution phase -> we store the result in a file -> 
+# we can later display the file using tensorboard
 mse_summary = tf.summary.scalar('MSE', mse)
 
 #create a FileWriter that we will use to write summaries to logfiles in the log directory
@@ -112,14 +120,12 @@ mse_summary = tf.summary.scalar('MSE', mse)
 #second param= graph we want to visualize
 #Note: the FileWriter create the log dir if it doesn't exist, and write the graph definition in 
 #a binary logfile called an even file
-file_writer = tf.summary.FileWriter(logdir, tf.get_default_graph())
+file_writer = tf.summary.FileWriter(logdir, tf.get_default_graph()) #write the default graph in the logdir folder
 
 
 '''
 Execution phase
 '''
-
-
 def fetch_batch(epoch, batch_index, batch_size):
     #load the data from disk
     #X_batch = scaled_housing_data_plus_bias[batch_size*batch_index : batch_size*(batch_index+1) - 1,:]
@@ -130,6 +136,9 @@ def fetch_batch(epoch, batch_index, batch_size):
     y_batch = housing.target.reshape(-1, 1)[indices] # not shown
     return X_batch, y_batch
 
+
+
+
 with tf.Session() as sess:
     sess.run(init)
     for epoch in range(n_epochs):
@@ -138,9 +147,9 @@ with tf.Session() as sess:
             #Evaluate the mse_summary node regulary during training. 
             #This output a summary that we can then write to the events file using file_wrier
             if(batch_index % 10) == 0:  #every 10 minibatch
-                summary_str = mse_summary.eval(feed_dict = {X: X_batch, y:y_batch})
+                summary_str = mse_summary.eval(feed_dict = {X: X_batch, y: y_batch})
                 step = epoch * n_batches + batch_index
-                file_writer.add_summary(summary_str, step)
+                file_writer.add_summary(summary_str, step) #add the summary to the event file
             sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
         if(epoch % 100 == 0):   #for each 100 epoch
             #print("Epoch", epoch, "MSE=", mse.eval()) #you need to feed x and y
@@ -153,12 +162,18 @@ with tf.Session() as sess:
 
 print('\n best_theta = \n', best_theta)
 
-
-file_writer.close()
-
-
+'''
+When we run this program, it create the log directory and write an events file in it.
+This event file, containt both the graph definition and the MSE values.
+Tensorboard can then be used to visualize the mse values. 
+To fire up a tensorboard server proceed as follow:
+'''
 #pip show tensorflow
 #Location: c:\programdata\anaconda3\lib\site-packages 
 #cd c:\programdata\anaconda3\lib\site-packages
 #cd tensorboard 
 #python main.py --logdir=C:\Users\BT\Documents\others\tf\tf_boards\tf_logs\
+file_writer.close()
+
+
+
