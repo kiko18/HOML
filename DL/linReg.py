@@ -170,8 +170,7 @@ To fire up a tensorboard server proceed as follow:
 '''
 #pip show tensorflow
 #Location: c:\programdata\anaconda3\lib\site-packages 
-#cd c:\programdata\anaconda3\lib\site-packages
-#cd tensorboard 
+#cd c:\programdata\anaconda3\lib\site-packages\tensorboard 
 #python main.py --logdir=C:\Users\BT\Documents\others\tf\tf_boards\tf_logs\
 file_writer.close()
 
