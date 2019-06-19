@@ -1,0 +1,17 @@
+Add python to environment path
+-------------------------------
+
+1) anaconda prompt:
+§ where python 
+C:\ProgramData\Anaconda3\python.exe 
+
+$where conda
+C:\ProgramData\Anaconda3\Scripts\conda.exe
+
+2) cmd prompt
+SETX PATH "%PATH%;C:\ProgramData\Anaconda3\Scripts;C:\ProgramData\Anaconda3"
+
+
+Install tensorflow-gpu
+------------------------
+conda install tensorflow-gpu   

@@ -66,9 +66,12 @@ Supose we have chatted with experts who told us that the median income is a very
 to predict median housing price. We may want to ensure that the test set is representative of the various
 categories of incomes in the whole datasets. Since the median income is a continous numerical attribute, 
 we first need to create an income category attribute.
+
+It is important to have sufficient number of instance in your dataset for each stratum.
 '''
 #create an incoming category attribute
 # Divide by 1.5 to limit the number of income categories
+#round up using ceil to have discrete categorie
 housing["income_cat"] = np.ceil(housing["median_income"] / 1.5)
 # Label those above 5 as 5
 housing["income_cat"].where(housing["income_cat"] < 5, 5.0, inplace=True)
@@ -76,8 +79,8 @@ print(housing["income_cat"].value_counts())
 
 
 #Do stratified sampling 
-#for a usa data set on gender whit 48% men and 52% femele, 
-#the goal of stratified sampling will be todivise the dataset such that the proportion 
+#for a USA data set on gender whit 48% men and 52% femele, 
+#the goal of stratified sampling will be to divise the dataset such that the proportion 
 #of man an femele are maintaint in both training and testset
 from sklearn.model_selection import StratifiedShuffleSplit
 split = StratifiedShuffleSplit(n_splits = 1, test_size=0.2, random_state=42)
@@ -107,6 +110,8 @@ print(housing["income_cat"].value_counts() / len(housing))
 print(train_set["income_cat"].value_counts() / len(train_set))
 print(test_set["income_cat"].value_counts() / len(test_set))
 
+#stratified sampling is a good way to split our data such that important attribut are equaly distributed
+#in the training and test set
 #we remove the income_cat so the data is back to its original state
 for set_ in (strat_train_set, strat_test_set):
     set_.drop("income_cat", axis=1, inplace=True)
