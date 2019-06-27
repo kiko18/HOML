@@ -301,8 +301,7 @@ print(housing_cat_1hot)
 # in our case Scipy matrix is not too large, we can convert it to a numpy array
 housing_cat_1hot.toarray()
 
-# test
-
+# test123
 
 
 
