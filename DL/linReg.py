@@ -168,6 +168,8 @@ This event file, containt both the graph definition and the MSE values.
 Tensorboard can then be used to visualize the mse values. 
 To fire up a tensorboard server proceed as follow:
 '''
+
+
 #pip show tensorflow
 #Location: c:\programdata\anaconda3\lib\site-packages 
 #cd c:\programdata\anaconda3\lib\site-packages\tensorboard 
