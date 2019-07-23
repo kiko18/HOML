@@ -110,4 +110,4 @@ tree_clf = DecisionTreeClassifier(max_depth=tree_depth, random_state=42) #max_de
 tree_clf.fit(X, y)
 y_pred = tree_clf.predict(X)
 fscore_2 = f1_score(y, y_pred, average='weighted') 
-print('F1 score (depth-3 classifier) = ', fscore_2)
+print('F1 score (depth-',tree_depth, ' classifier) = ', fscore_2)
