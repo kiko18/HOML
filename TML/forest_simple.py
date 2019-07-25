@@ -3,6 +3,13 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.datasets import make_moons
 from sklearn.model_selection import train_test_split
 
+'''
+Random Forest or more generally Enssemble Methods are used near the end of the project,
+once we have already built a few good predictors, to combine them into an even better predictor.
+Let first build a good decision tree predictor using a gridsearch over some hyperparms.
+After that we will then grow a forest combining this predictor to get a more powerfull one
+'''
+
 #load moons data and split 
 Xm, ym = make_moons(n_samples=1000, noise=0.25, random_state=53)
 Xm_train, Xm_test, ym_train, ym_test = train_test_split( Xm, ym, test_size=0.2, random_state=42)
@@ -11,7 +18,8 @@ Xm_train, Xm_test, ym_train, ym_test = train_test_split( Xm, ym, test_size=0.2, 
 from sklearn.model_selection import GridSearchCV
 params = {'max_leaf_nodes': list(range(2, 100)), 'min_samples_split': [2, 3, 4]}
 grid_search_cv = GridSearchCV(DecisionTreeClassifier(random_state=42), params, n_jobs=-1, verbose=1, cv=3)
-grid_search_cv.fit(Xm_train, ym_train)
+#fit 882 models =  98 (max_leaf_nodes values) *3 (min_samples_split values)*3(cross val)
+grid_search_cv.fit(Xm_train, ym_train)  
 # get the best classifier
 clf_best = grid_search_cv.best_estimator_
 # predict using best classifier
@@ -20,7 +28,18 @@ ym_pred = clf_best.predict(Xm_test)
 from sklearn.metrics import accuracy_score
 accuracy_score(ym_test, ym_pred)
 
+'''
+We will train a group of Decision Tree classifiers, each on on a different RANDOM
+subset of the training set.
+To make predictions, we just obtain the prediction of all individual trees, then
+predict the class that gets the most votes. 
+Such an enssemble of decision tree is called a RANDOM forest (random because we 
+train on random subset o the training set).
+Despite its simplicity, random forest is one the most powerful Machine Learning algorithms
+available today.
+'''
 
+'''
 #generate 1000 subsets of the training set, each containing 100 instances selected randomly
 from sklearn.model_selection import ShuffleSplit
 
@@ -64,7 +83,8 @@ y_pred_majority_votes, n_votes = mode(Y_pred_forest, axis=0)
 
 forest_accuracy_with_majority_votes = accuracy_score(ym_test, np.squeeze(y_pred_majority_votes))
 print('forest_accuracy with majority votes =', forest_accuracy_with_majority_votes)
-    
+'''    
+
 '''
 as we see, the technique with majority vote perform best, raising the accuracy of about 0.5 to 1.5%
 '''    
