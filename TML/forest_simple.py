@@ -39,7 +39,7 @@ Despite its simplicity, random forest is one the most powerful Machine Learning 
 available today.
 '''
 
-'''
+
 #generate 1000 subsets of the training set, each containing 100 instances selected randomly
 from sklearn.model_selection import ShuffleSplit
 
@@ -83,7 +83,7 @@ y_pred_majority_votes, n_votes = mode(Y_pred_forest, axis=0)
 
 forest_accuracy_with_majority_votes = accuracy_score(ym_test, np.squeeze(y_pred_majority_votes))
 print('forest_accuracy with majority votes =', forest_accuracy_with_majority_votes)
-'''    
+   
 
 '''
 as we see, the technique with majority vote perform best, raising the accuracy of about 0.5 to 1.5%
