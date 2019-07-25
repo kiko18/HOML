@@ -77,24 +77,24 @@ y_pred = bag_clf.predict(X_test)
 
 # evaluate the enssemble classifier
 from sklearn.metrics import accuracy_score
-print(accuracy_score(y_test, y_pred))
+print('Bagging classifier', accuracy_score(y_test, y_pred))
 
 # get the oob evaluation (it should be close to the enssemble classifier)
 bag_clf.fit(X_train, y_train)
-bag_clf.oob_score_
+print('oob of Bagging classifier', bag_clf.oob_score_)
+
+# see how a single tree will have done
+tree_clf = DecisionTreeClassifier(random_state=42)
+tree_clf.fit(X_train, y_train)
+y_pred_tree = tree_clf.predict(X_test)
+print('single tree classifier', accuracy_score(y_test, y_pred_tree))
 
 #we also have acess to the out of bag (oob) decision function for each instance
 #in the case, since the base estimator (tree) can estimate class probabilities
 #(i.e it has a predict proba() method)  the decision function return class probabilities
 #for each training instance.  For example, the oob evaluator estimates that 
 #the first training instance has a 68.25% proba of belonging to the positive class
-print('oob decision function for each instance: ', bag_clf.oob_decision_function_)
-
-# see how a single tree will have done
-tree_clf = DecisionTreeClassifier(random_state=42)
-tree_clf.fit(X_train, y_train)
-y_pred_tree = tree_clf.predict(X_test)
-print(accuracy_score(y_test, y_pred_tree))
+#   print('oob decision function for each instance: ', bag_clf.oob_decision_function_)
 
 
 #plot both decision boudaries (single tree and enssemble)
