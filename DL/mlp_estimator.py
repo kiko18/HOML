@@ -18,10 +18,10 @@ import time
 (X_train, y_train), (X_test, y_test) = tf.keras.datasets.mnist.load_data()
 
 #show one training instance
-plt.imshow(X_train[100, :, :])
+plt.imshow(X_train[22, :, :])
 plt.show()
 
-#reshape the data
+#Scaling the data
 X_train = X_train.astype(np.float32).reshape(-1, 28*28) / 255.0
 X_test = X_test.astype(np.float32).reshape(-1, 28*28) / 255.0
 y_train = y_train.astype(np.int32)
@@ -39,7 +39,7 @@ and a softmax output layer to output the estimated class probabilities.
 '''
 
 #give a directory where the model will be saved
-modelDir = 'C:/Users/BT/Documents/others/tf/tf_boards/tf_logs/model'
+modelDir = 'C:/Users/BT/Documents/others/tf/tf_boards/tf_logs/mlp_estimator'
 
 
 #create set of real value column from the trainingset
@@ -82,3 +82,8 @@ y_pred_iter = dnn_clf.predict(input_fn=test_input_fn)
 y_pred = list(y_pred_iter)
 y_pred[0]
 
+'''
+Under the hoot, the DNNClassifier class creates all the neuron layers, based on the ReLU activation function 
+(we can change this by setting the activation_fn hyperparameter). 
+The output layer relies on the softmax function and the cost function is cross entropy 
+'''
