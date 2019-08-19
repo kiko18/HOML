@@ -6,7 +6,7 @@ Created on Wed Jun 19 13:02:04 2019
 """
 
 '''
-in this script we will train a DNN using tensorflow Estimator high-level API
+in this skript we will train a DNN using tensorflow Estimator high-level API
 '''
 
 import matplotlib.pyplot as plt
@@ -33,8 +33,7 @@ y_valid, y_train = y_train[:5000], y_train[5000:]
 
 
 '''
-The simplest way to train an MLP with TensorFlow is to use the high-level Estimator API 
-(formerly tf.contrib.learn).
+The simplest way to train an MLP with TensorFlow is to use the high-level Estimator API (formerly tf.contrib.learn).
 The DNNClassifier class makes it fairly easy to train a Deep NN with any number of hidden layers,
 and a softmax output layer to output the estimated class probabilities. 
 '''
