@@ -35,16 +35,17 @@ y = tf.placeholder(tf.int64, shape=(None), name="y")
 '''
 Now we want to create the Neural Newtork.
 -Note that the output layer use softmax activation function instead of Relu 
- softmax is generally is a good choice for classificatio task (when the class are mutually exclusive)
- For regression task, one ca use no activation function at all in the output layer.
+ softmax is generally a good choice for classification task (when the class are mutually exclusive)
+ For regression task, one can
+ use no activation function at all in the output layer.
 -The two hidden layer are almost identical, they only differ by the inputs
  they are conected to and by the number of neuron they contain.
  In most cases, we can use Relu activation function (or its variant, like leaky relu) in the hidden layer, 
  it is a bit faster to compute than other activations and GD does not get stuck as much on plateaus,
- thanks to the fct that it does not saturate for large input values (as opposed to the logistic function of the tanh,
+ thanks to the fact that it does not saturate for large input values (as opposed to the logistic function of the tanh,
  which saturate at 1)
 -The placeholder x will act as the input layer. During the execution phase, it will
- be replace with one trainning batch at a time (all the instance in a batch are processed
+ be replace with one training batch at a time (all the instance in a batch are processed
  simultaneously by the NN)
 '''
 
@@ -70,7 +71,7 @@ def neuron_layer(X, n_neurons, name, activation=None):
         # neural networks that have had a tremendous impact on their efficiency).
         # moreover, using a truncated normal distribution rather than a regular normal 
         # distribution ensures that there won't be any large weights, which could slow down training.
-        # W will be a 2D tensor containing all the connection weights 
+        # Param W will be a 2D tensor containing all the connection weights 
         # between each input and each neuron, hence of shape (n_inputs, n_neurons).
         # It is important to initialize connections weight randomly for each hidden
         # layers to avoid any symmetries that GD algo would be unable to break
@@ -111,14 +112,14 @@ with tf.name_scope("dnn"):
 Now that we have the NN model ready to go, we need to define the cost function that we will use to train it.
 We will use the cross entropy. It penalize models that estimate a low probability for the target class. 
 Tf provides several function to compute cross entropy. We will use sparse_softmax_cross_entropy_with_logits(),
-it compute the cross entropy based on the "logits" (i.e, the output of the network before
+It compute the cross entropy based on the "logits" (i.e, the output of the network before
 going through the softmax activation function), 
 and it expects labels in the form of integers ranging from 0 to n_classes-1 (in our case 0 to 9)
 This give us a 1D tensor containing the cross entropy for each instance.
 we can then use tf.reduce_mean() to compute the mean cross entropy over all instances.
 '''    
-
 with tf.name_scope("loss"):
+    
     # Sparse_softmax_cross_entropy_with_logits is equivalent to applying softmax activation
     # Function and then computing the cross entropy, but it is more efficient.
     # It also properly takes care of corner cases like logits equal to 0.
@@ -154,10 +155,9 @@ with tf.name_scope("eval"):
  
 
 '''
-As usual we need to to create a node to initialize all variables
+As usual we need to create a node to initialize all variables
 we also create a tf saver to save our trained model params to disk
 '''
-
 init = tf.global_variables_initializer()
 saver = tf.train.Saver()
 
@@ -210,7 +210,6 @@ def shuffle_batch(X, y, batch_size):
         yield X_batch, y_batch
 
 
-
 with tf.Session() as sess:
     init.run()
     for epoch in range(n_epochs):
@@ -248,8 +247,9 @@ with tf.Session() as sess:
     saver.restore(sess, modelParamsDir) # or better, use save_path
     # load some new images that we want to classify (it muss have been scaled the same way as the training data)
     X_new_scaled = X_test[:20]  
-    # evaluate logit node (If you want to know all the estimated class proba, you need to apply the softmax(9 fct to the logits))
-    #but if you just want to predict a class, you can just pick the class with the heighest logit value (argmax fct does the trick)
+    # evaluate logit node (If you want to know all the estimated class proba, you need to apply the softmax
+    # (9 fct to the logits))but if you just want to predict a class, you can just pick the class with the
+    # heighest logit value (argmax fct does the trick)
     Z = logits.eval(feed_dict={X: X_new_scaled}) 
     y_pred = np.argmax(Z, axis=1)
     

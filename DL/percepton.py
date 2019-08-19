@@ -19,10 +19,9 @@ from sklearn.datasets import load_iris
 from sklearn.linear_model import Perceptron
 
 '''
-The perceptron is one of the simplest ANN architectures. 
-invented in 1957 by Frank Rosenblatt.
-It is based on a slighly different artificial neuron called a 
-linear threshold unit (LTU)  h = g(WX) where g is a step function
+The perceptron is one of the simplest ANN architectures invented in 1957 by Frank Rosenblatt.
+It is based on a slighly different artificial neuron called a linear threshold unit (LTU)  
+h = g(WX) where g is a step function.
 The most commonly step function used in perceptron is the sign function
  g(z) = 0 if z<0 , 1 if z>=0
  
@@ -71,7 +70,7 @@ class MyPerception():
         self.num_iterations = num_iterations
         self.learning_rate = learning_rate
         self.print_cost = print_cost
-        self.isParamsIntialized=False
+        self.areParamsIntialized=False
           
     #sigmoid is perfect for binary classification since it output values between 0-1    
     def sigmoid(self, z):
@@ -90,7 +89,7 @@ class MyPerception():
         assert(w.shape == (dim, 1))
         assert(isinstance(b, float) or isinstance(b, int))
         
-        self.isParamsIntialized = True       
+        self.areParamsIntialized = True       
         return w, b
     
     
@@ -126,7 +125,7 @@ class MyPerception():
         learning_rate = self.learning_rate
         print_cost = self.print_cost
         
-        if not self.isParamsIntialized:
+        if not self.areParamsIntialized:
             return
         
         for i in range(num_iterations):
