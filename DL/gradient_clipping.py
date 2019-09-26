@@ -5,7 +5,6 @@ Created on Fri Sep 20 06:43:39 2019
 @author: BT
 """
 
-
 '''
 Beside Batch normalization another popular technique to lessen the exploding gradient problem is to simply clip gradients 
 during backpropagation so that they never exceed some threshold (this is mostly used for recurrent neural networks).
@@ -64,9 +63,15 @@ with tf.name_scope("loss"):
 # A hyper params you can tune 
 threshold = 1.0
 
-# Optimizer that implements the gradient descent algorithm 
+'''
+Here comes the gradient clipping part.
+we must compute the gradient and apply it separetely, such that we can in between clip it.
+usually we use optimizer.minimize(loss), which do both computing the gradient and applying it.
+'''
+# create an optimizer object
+# (Optimizer that implements the gradient descent algorithm)
 optimizer = tf.train.GradientDescentOptimizer(learning_rate)
-# compute the gradient
+# compute the gradient using this optimizer
 grads_and_vars = optimizer.compute_gradients(loss)
 # clip the gradient between -1.0 ans 1.0
 capped_gvs = [(tf.clip_by_value(grad, -threshold, threshold), var) for grad, var in grads_and_vars]
@@ -75,11 +80,9 @@ capped_gvs = [(tf.clip_by_value(grad, -threshold, threshold), var) for grad, var
 training_op = optimizer.apply_gradients(capped_gvs)
 
 
-
 '''
 The rest is the same as usual
 '''
-
 # Define the evaluation operation
 with tf.name_scope("eval"):
     correct = tf.nn.in_top_k(logits, y, 1)
@@ -119,10 +122,11 @@ with tf.Session() as sess:
     for epoch in range(n_epochs):
         for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):
             sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
+        # evaluate the accuracy for the current epoch
         accuracy_val = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
-        print(epoch, "Validation accuracy:", accuracy_val)
+        print('Epoch', epoch, "Validation accuracy:", accuracy_val)
 
-    save_path = saver.save(sess, modelParamsDir)
+    #save_path = saver.save(sess, modelParamsDir)
 
 
 
