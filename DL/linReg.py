@@ -10,14 +10,12 @@ pip install opencv-python
 from datetime import datetime
 
 now = datetime.utcnow().strftime("%Y%m%d%H%M%S") 
-root_logdir = "C:/Users/BT/Documents/others/tf/tf_boards/tf_logs" #the directory is created if it doesnt exist
+root_logdir = "./mylogs/tf_boards" #the directory is created if it doesnt exist
 logdir = "{}/run-{}/".format(root_logdir, now) #the log dir is different at each run
 
 import numpy as np
 import tensorflow as tf
 from sklearn.datasets import fetch_california_housing
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error
 
 housing = fetch_california_housing()
 m, n = housing.data.shape
@@ -122,7 +120,16 @@ mse_summary = tf.summary.scalar('MSE', mse)
 #a binary logfile called an even file
 file_writer = tf.summary.FileWriter(logdir, tf.get_default_graph()) #write the default graph in the logdir folder
 
-
+'''
+When you're the author of a model, you could make things easier for people who will reuse your model by giving operations 
+very clear names and documenting them. Another approach is to create a collection containing all the important operations 
+that people will want to get a handle on. this is done above, 
+This way people who reuse your model will be able to simply write:
+X, y, mse, training_op = tf.get_collection("my_important_ops")
+'''
+for op in (X, y, mse, training_op):
+    tf.add_to_collection("my_important_ops", op)
+    
 '''
 Execution phase
 '''
@@ -154,11 +161,11 @@ with tf.Session() as sess:
         if(epoch % 100 == 0):   #for each 100 epoch
             #print("Epoch", epoch, "MSE=", mse.eval()) #you need to feed x and y
             #save checkpoint at regular intervals
-            save_path = saver.save(sess, "C:/Users/BT/Documents/others/tf/tf_models/temp/my_linReg_model_intermediate.ckpt")
+            save_path = saver.save(sess, "./mylogs/tf_models/temp/my_linReg_model_intermediate.ckpt")
 
     #theta does not depend on X and y so we don't need to feed them here 
     best_theta = theta.eval()
-    save_path = saver.save(sess, "C:/Users/BT/Documents/others/tf/tf_models/my_linReg_model.ckpt")
+    save_path = saver.save(sess, "./mylogs/tf_models/my_linReg_model.ckpt")
 
 print('\n best_theta = \n', best_theta)
 

@@ -78,7 +78,7 @@ with tf.name_scope("dnn"):
 
     hidden1 = my_dense_layer(X, n_hidden1, name="hidden1")
     bn1 = my_batch_norm_layer(hidden1)
-    bn1_act = tf.nn.elu(bn1)
+    bn1_act = tf.nn.elu(bn1, name= 'bn1_act')
     hidden2 = my_dense_layer(bn1_act, n_hidden2, name="hidden2")
     bn2 = my_batch_norm_layer(hidden2)
     bn2_act = tf.nn.elu(bn2)
@@ -105,6 +105,16 @@ Define the evaluation operation
 with tf.name_scope("eval"):
     correct = tf.nn.in_top_k(logits, y, 1)
     accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
+    
+'''
+When you're the author of a model, you could make things easier for people who will reuse your model by giving operations 
+very clear names and documenting them. Another approach is to create a collection containing all the important operations 
+that people will want to get a handle on. this is done above, 
+This way people who reuse your model will be able to simply write:
+X, y, mse, training_op = tf.get_collection("my_important_ops")
+'''    
+for op in (X, y, accuracy, training_op):
+    tf.add_to_collection("my_important_ops", op)
     
 '''
 create a variable initializer as well as a saver
@@ -149,7 +159,7 @@ so all we need to do is get the list of operations in that collection and run th
 '''
 extra_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
-modelParamsDir = 'C:/Users/BT/Documents/others/tf/tf_boards/params/mlp_plain_tf.ckpt'
+modelParamsDir = './mylogs/tf_models/my_batch_norm.ckpt'
 
 with tf.Session() as sess:
     init.run()
