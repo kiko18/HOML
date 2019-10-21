@@ -103,7 +103,8 @@ plus the new operations), and an initialization operation to initialize all the 
 
 reset_graph()
 
-n_hidden2 = 80  # new layer
+n_hidden3 = 65  # new layer
+n_hidden4 = 25  # new layer
 n_outputs = 10  # new layer
 learning_rate = 0.01 
 
@@ -113,9 +114,11 @@ X = tf.get_default_graph().get_tensor_by_name("X:0")
 y = tf.get_default_graph().get_tensor_by_name("y:0")
 
 hidden1 = tf.get_default_graph().get_tensor_by_name("dnn/bn1_act:0")
+hidden2 = tf.get_default_graph().get_tensor_by_name("dnn/bn2_act:0")
 
-new_hidden2 = tf.layers.dense(hidden1, n_hidden2, activation=tf.nn.relu, name="new_hidden2")
-new_logits = tf.layers.dense(new_hidden2, n_outputs, name="new_outputs")
+new_hidden3 = tf.layers.dense(hidden2, n_hidden3, activation=tf.nn.relu, name="new_hidden3")
+new_hidden4 = tf.layers.dense(new_hidden3, n_hidden4, activation=tf.nn.relu, name="new_hidden4")
+new_logits = tf.layers.dense(new_hidden4, n_outputs, name="new_outputs")
 
 with tf.name_scope("new_loss"):
     xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=new_logits)
@@ -150,9 +153,8 @@ with tf.Session() as sess:
 Note that, the more similar the tasks are, the more layers you want to reuse (starting from lower layers).
 For very similar tasks, you can try keeping all the hidden layers and just replace the output layer.
 '''
-
-
-
+import sys
+sys.modules[__name__].__dict__.clear()
 
 
 

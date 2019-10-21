@@ -46,6 +46,8 @@ def reset_graph(seed=42):
 n_inputs = 28*28  # MNIST
 n_hidden1 = 300
 n_hidden2 = 100
+n_hidden3 = 50
+n_hidden4 = 20
 n_outputs = 10
 
 #The batch-normalization algorithm uses exponential decay to compute the running averages
@@ -67,22 +69,26 @@ with tf.name_scope("dnn"):
     he_init = tf.variance_scaling_initializer()
 
     #To avoid repeating the same parameters over and over again, we can use Python's partial() function:
-    my_batch_norm_layer = partial(
-            tf.layers.batch_normalization,
-            training=training,
-            momentum=batch_norm_momentum)
-
-    my_dense_layer = partial(
-            tf.layers.dense,
-            kernel_initializer=he_init)
+    my_batch_norm_layer = partial(tf.layers.batch_normalization, training=training, momentum=batch_norm_momentum)
+    my_dense_layer = partial(tf.layers.dense, kernel_initializer=he_init)
 
     hidden1 = my_dense_layer(X, n_hidden1, name="hidden1")
     bn1 = my_batch_norm_layer(hidden1)
     bn1_act = tf.nn.elu(bn1, name= 'bn1_act')
+    
     hidden2 = my_dense_layer(bn1_act, n_hidden2, name="hidden2")
     bn2 = my_batch_norm_layer(hidden2)
-    bn2_act = tf.nn.elu(bn2)
-    logits_before_bn = my_dense_layer(bn2_act, n_outputs, name="outputs")
+    bn2_act = tf.nn.elu(bn2, name= 'bn2_act')
+    
+    hidden3 = my_dense_layer(bn1_act, n_hidden3, name="hidden3")
+    bn3 = my_batch_norm_layer(hidden3)
+    bn3_act = tf.nn.elu(bn3, name= 'bn3_act')
+    
+    hidden4 = my_dense_layer(bn1_act, n_hidden4, name="hidden4")
+    bn4 = my_batch_norm_layer(hidden4)
+    bn4_act = tf.nn.elu(bn4, name= 'bn4_act')
+    
+    logits_before_bn = my_dense_layer(bn4_act, n_outputs, name="outputs")
     logits = my_batch_norm_layer(logits_before_bn)
 
 '''
@@ -230,3 +236,5 @@ for layer in range(1000):
         print("Layer {}: mean {:.2f}, std deviation {:.2f}".format(layer, means, stds))
 
 
+import sys
+sys.modules[__name__].__dict__.clear()
