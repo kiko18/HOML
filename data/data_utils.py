@@ -59,7 +59,7 @@ def load_planar_dataset():
 
 
 def load_sign_dataset():
-    data_ = loadmat('data/sign.mat')
+    data_ = loadmat('./sign.mat')
     X = data_['X']
     y = data_['y']
     X_train, X_test, y_train, y_test = train_test_split( X, y, test_size=0.1, random_state=42)
@@ -69,7 +69,7 @@ def load_sign_dataset():
 
 
 def load_cat_dataset():
-    data_ = loadmat('data/catDog64.mat')
+    data_ = loadmat('./catDog32.mat')
     X = data_['X']
     y = data_['y']
     ratio = 1
@@ -82,7 +82,7 @@ def load_cat_dataset():
 
 
 def load_happy_house_dataset():
-    data = loadmat('data/happy_house.mat')
+    data = loadmat('./happy_house.mat')
     X_train = data['X_train']
     y_train = data['y_train']
     X_test  = data['X_test']
@@ -93,7 +93,7 @@ def load_happy_house_dataset():
 
 def load_cifar10_dataset():
     dataReduction = True
-    data = loadmat('data/cifar10.mat')
+    data = loadmat('./cifar10.mat')
     X_train = data['X_train']
     y_train = data['y_train']
     X_test  = data['X_test']
@@ -112,7 +112,7 @@ def load_cifar10_dataset():
 
 
 def load_cifar100_dataset():
-    data = loadmat('data/cifar100.mat')
+    data = loadmat('./cifar100.mat')
     X_train = data['X_train']
     y_train = data['y_train']
     X_test  = data['X_test']

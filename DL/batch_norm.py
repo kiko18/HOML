@@ -174,7 +174,7 @@ with tf.Session() as sess:
             #training_op depend on batch_normalization(), this implies we need to set training placeholder to true
             sess.run([training_op, extra_update_ops], feed_dict={training: True, X: X_batch, y: y_batch})
         accuracy_val = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
-        print(epoch, "Validation accuracy:", accuracy_val)
+        print("epoch", epoch, "Validation accuracy:", accuracy_val)
 
     save_path = saver.save(sess, modelParamsDir)
     

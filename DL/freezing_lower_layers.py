@@ -92,6 +92,7 @@ def shuffle_batch(X, y, batch_size):
 we restore layer 1, 2 and 3
 '''
 reuse_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope="hidden[123]") # regular expression
+reuse_vars = reuse_vars[:3] #this line should not be necessary
 restore_saver = tf.train.Saver(reuse_vars) # to restore layers 1-3
 
 init = tf.global_variables_initializer()
@@ -100,13 +101,15 @@ saver = tf.train.Saver()
 with tf.Session() as sess:
     init.run()
     restore_saver.restore(sess, "./mylogs/tf_models/my_batch_norm.ckpt")
-
+    
+    print(" \n ------ \n Train while froozen some layers: \n ------ \n")
+    
     for epoch in range(n_epochs):
         for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):
             # remember that in training_op it is specify that layer  and 2 are frozen
             sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
         accuracy_val = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
-        print(epoch, "Validation accuracy:", accuracy_val)
+        print("epoch", epoch, "Validation accuracy:", accuracy_val)
 
     save_path = saver.save(sess, "./mylogs/tf_models/my_model_final_2.ckpt")    
     
@@ -156,8 +159,8 @@ with tf.name_scope("train"):
     
     
     
-reuse_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
-                               scope="hidden[123]") # regular expression
+reuse_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope="hidden[123]") # regular expression
+reuse_vars = reuse_vars[:3]
 restore_saver = tf.train.Saver(reuse_vars) # to restore layers 1-3
 
 init = tf.global_variables_initializer()
@@ -172,7 +175,8 @@ with tf.Session() as sess:
     
     h2_cache = sess.run(hidden2, feed_dict={X: X_train})
     h2_cache_valid = sess.run(hidden2, feed_dict={X: X_valid}) # not shown in the book
-
+    
+    print(" \n ------ \n Train while caching the froozen layers:\n ------ \n ")
     for epoch in range(n_epochs):
         shuffled_idx = np.random.permutation(len(X_train))
         hidden2_batches = np.array_split(h2_cache[shuffled_idx], n_batches)
@@ -182,7 +186,7 @@ with tf.Session() as sess:
 
         accuracy_val = accuracy.eval(feed_dict={hidden2: h2_cache_valid, # not shown
                                                 y: y_valid})             # not shown
-        print(epoch, "Validation accuracy:", accuracy_val)               # not shown
+        print("epoch", epoch, "Validation accuracy:", accuracy_val)               # not shown
 
     save_path = saver.save(sess, "./mylogs/tf_models/my_model_final_3.ckpt")
     
