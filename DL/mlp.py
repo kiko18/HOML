@@ -44,8 +44,7 @@ class MyMLP():
                         b1 -- bias vector of shape (n_h, 1)
                         W2 -- weight matrix of shape (n_y, n_h)
                         b2 -- bias vector of shape (n_y, 1)
-        """
-       
+        """   
         np.random.seed(2) # we set up a seed so that your output matches ours although the initialization is random.
         
         W1 = np.random.randn(n_h,n_x)*0.01
@@ -61,8 +60,7 @@ class MyMLP():
         parameters = {"W1": W1,
                       "b1": b1,
                       "W2": W2,
-                      "b2": b2}
-        
+                      "b2": b2}  
         return parameters
     
     
@@ -93,11 +91,8 @@ class MyMLP():
         cache = {"Z1": Z1,
                  "A1": A1,
                  "Z2": Z2,
-                 "A2": A2}
-        
+                 "A2": A2}     
         return A2, cache
-    
-    
     
     
     def compute_cost(self, A2, Y, parameters):
