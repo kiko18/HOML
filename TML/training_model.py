@@ -7,6 +7,11 @@ Created on Wed Dec  4 14:12:09 2019
 """
 
 '''
+In ML Training a model means searching for a combination of model parameters that minimizes 
+a cost function (over the trainig set). It is a search in the model's parameters space.
+The more parameter a model has, the more dimensions this space has, and the harder the search is.
+Searching for a needle in a 300-dimensional haystack is much trickier than in 3 dimensions.
+
 There are 2 differents way of training models in ML.
 - using a direct "closed-form" equation that directely computes the model parameters 
   that best fit the model to the tranning set (ie. the model paramater that minimize 
