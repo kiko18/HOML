@@ -20,8 +20,10 @@ from sklearn.linear_model import Perceptron
 
 '''
 The perceptron is one of the simplest ANN architectures invented in 1957 by Frank Rosenblatt.
-It is based on a slighly different artificial neuron called a linear threshold unit (LTU)  
-h = g(WX) where g is a step function.
+It is based on a slighly different artificial neuron called a linear threshold unit (LTU).
+LTU computes a weighted sum of its inputs then applies a step function. 
+z = w1*x1 + w2*x2 + ... + wn*xn = X^T W   
+h = g(z) where g is a step function.
 The most commonly step function used in perceptron is the sign function
  g(z) = 0 if z<0 , 1 if z>=0
  
@@ -51,9 +53,11 @@ plt.ylabel('Petal width')
 plt.title("Dataset")
 plt.show()
 
+#classify using sklearn perceptron
 per_clf = Perceptron(max_iter=100, tol=-np.infty, random_state=42)
 per_clf.fit(X, y)
 y_pred = per_clf.predict([[2, 0.5]])
+y_pred2 = per_clf.predict([[5, 15]])
 
 y_pred_train = per_clf.predict(X)
 
@@ -180,6 +184,11 @@ class MyPerception():
         A = np.squeeze(A)
                     
         # Convert probabilities A[0,i] to actual predictions p[0,i]
+        '''
+        Contrary to Logistic Regression classifiers, perceptrons do not output a class probability; 
+        rather, they make prediction based on a hard threshold. This is one reason to prefer 
+        logistic regression over perceptrons.
+        '''
         Y_prediction = (A>0.5).astype(int)
         
         assert(Y_prediction.shape == (m,))
