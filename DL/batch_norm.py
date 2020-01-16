@@ -135,7 +135,7 @@ with tf.Session() as sess:
         accuracy_val = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
         print(epoch, "Validation accuracy:", accuracy_val)
 
-    save_path = saver.save(sess, modelParamsDir)
+    #save_path = saver.save(sess, modelParamsDir)
     
     
 '''
