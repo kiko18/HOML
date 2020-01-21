@@ -365,3 +365,13 @@ plt.xlabel(r"$\theta_0$", fontsize=20)
 plt.ylabel(r"$\theta_1$   ", fontsize=20, rotation=0)
 plt.axis([2.5, 4.5, 2.3, 3.9])
 plt.show()
+
+
+'''
+Polynomial Regression
+'''
+# What if your data is actually more complex than a simple straight line? 
+# Surprisingly, you can actually use a linear model to fit nonlinear data. 
+# A simple way to do this is to add powers of each feature as new features, 
+# then train a linear model on this extended set of features. 
+# This technique is called Polynomial Regression.
