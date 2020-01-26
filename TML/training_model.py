@@ -5,18 +5,33 @@ Created on Thu Dec 26 11:59:33 2019
 
 @author: bs
 """
+
+'''
+In ML Training a model means searching for a combination of model parameters that minimizes 
+a cost function (over the trainig set). It is a search in the model's parameters space.
+The more parameter a model has, the more dimensions this space has, and the harder the search is.
+Searching for a needle in a 300-dimensional haystack is much trickier than in 3 dimensions.
+
+There are 2 differents way of training models in ML.
+- using a direct "closed-form" equation that directely computes the model parameters 
+  that best fit the model to the tranning set (ie. the model paramater that minimize 
+  the cost function over the traning set)
+- Using an iterative optimization approach called Gradient Descent (GD) that gradually 
+  tweaks the model parameters to minimize the cost function over the traning set. 
+  Eventually converging to the same set of parameters as the first method.
+  
+We will first look at linear regression, a model capable of fitting linear data.
+Later on, we will look at Polinomial regression, which is a more complex model that can fit
+non-linear datasets. Since this model has more parameters than linear Regression, it is
+more prone to overfitting the traning data. So we will learn to detect whether or not
+this is the case using learning curves and we will look at several regularization techniques 
+that can reduce the risk of overfitting the traning set.
+'''
+
 import numpy as np
 import matplotlib.pyplot as plt
 '''
 Let fist start by looking at the Linear Regression model, one of the simplest models there is.
-There is 2 way to train it: 
-    - Using a direct “closed-form” equation that directly computes the model parameters 
-      that best fit the model to the training set (i.e., the model parameters that minimize 
-      the cost function over the training set).
-    - Using an iterative optimization approach, called Gradient Descent (GD), that gradually 
-      tweaks the model parameters to minimize the cost function over the training set, eventually 
-      converging to the same set of parameters as the first method. They are many variant of 
-      Gradient Descent : Batch GD, Mini-batch GD, and Stochastic GD.
 In Chapter 1, we looked at a simple regression model of life satisfaction: 
     life_satisfac‐ tion = theta_0 + theta_1 × GDP_per_capita.
 More generally, a linear model makes a prediction by simply computing a weighted sum of the input 
@@ -51,6 +66,13 @@ Normal Equation
 
 X = 2 * np.random.rand(100, 1)
 y = 4 + 3 * X + np.random.randn(100, 1)
+
+plt.plot(X, y, "b.")
+plt.xlabel("$x_1$", fontsize=18)
+plt.ylabel("$y$", rotation=0, fontsize=18)
+plt.axis([0, 2, 0, 15])
+plt.show()
+
 X_b = np.c_[np.ones((100, 1)), X] # add x0 = 1 to each instance 
 theta_best = np.linalg.inv(X_b.T.dot(X_b)).dot(X_b.T).dot(y)
 
@@ -117,6 +139,7 @@ Gradient Descent
 # Fortunately, since the cost function is convex in the case of Linear Regression, the needle is 
 # simply at the bottom of the bowl.
 
+# While the Normal Equation can only perform Linear Regression, GD can be used to train many other models.
 
 '''
 Batch Gradient Descent
@@ -375,3 +398,74 @@ Polynomial Regression
 # A simple way to do this is to add powers of each feature as new features, 
 # then train a linear model on this extended set of features. 
 # This technique is called Polynomial Regression.
+
+m = 100
+X = 6 * np.random.rand(m, 1) - 3
+y = 0.5 * X**2 + X + 2 + np.random.randn(m, 1)
+
+plt.plot(X, y, "b.")
+plt.xlabel("$x_1$", fontsize=18)
+plt.ylabel("$y$", rotation=0, fontsize=18)
+plt.axis([-3, 3, 0, 10])
+plt.title("quadratic_data_plot")
+plt.show()
+
+# Clearly, a straight line will never fit this data properly. So let’s use Scikit-Learn’s PolynomialFeatures
+# class to transform our training data, adding the square (2nd-degree polynomial) of each feature in the 
+# training set as new features (in this case there is just one feature)
+
+from sklearn.preprocessing import PolynomialFeatures
+poly_features = PolynomialFeatures(degree=2, include_bias=False)
+X_poly = poly_features.fit_transform(X)
+print(X[0])
+print(X_poly[0])
+
+lin_reg = LinearRegression()
+lin_reg.fit(X_poly, y)
+print(lin_reg.intercept_, lin_reg.coef_)
+
+# Not bad: the model estimates y = 0.525 x1^2 + 0.95 x1 + 1.97 when in fact the original
+# function was y = 0.5 x1^2 + 1.0 x1 + 2.0 + Gaussian noise.
+
+X_new=np.linspace(-3, 3, 100).reshape(100, 1)   # generate some test data point
+X_new_poly = poly_features.transform(X_new)     # compute polynomial features for those new data point
+y_new = lin_reg.predict(X_new_poly)             # predict the y value for those data point
+plt.plot(X, y, "b.")                            # plot the traning data
+plt.plot(X_new, y_new, "r-", linewidth=2, label="Predictions")  # plot the predictions
+plt.xlabel("$x_1$", fontsize=18)
+plt.ylabel("$y$", rotation=0, fontsize=18)
+plt.legend(loc="upper left", fontsize=14)
+plt.axis([-3, 3, 0, 10])
+plt.title("quadratic_predictions_plot")
+plt.show()
+
+# If you perform high-degree Polynomial Regression, you will likely fit the training
+# data much better than with plain Linear Regression. Let For example applies
+# a 300-degree polynomial model to the preceding training data, and compares the
+# result with a pure linear model and a quadratic model (2nd-degree polynomial).
+# Notice how the 300-degree polynomial model wiggles around to get as close as possible
+# to the training instances.
+
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+
+for style, width, degree in (("g-", 1, 300), ("b--", 2, 2), ("r-+", 2, 1)):
+    polybig_features = PolynomialFeatures(degree=degree, include_bias=False)
+    std_scaler = StandardScaler()
+    lin_reg = LinearRegression()
+    polynomial_regression = Pipeline([
+            ("poly_features", polybig_features),
+            ("std_scaler", std_scaler),
+            ("lin_reg", lin_reg),
+        ])
+    polynomial_regression.fit(X, y)
+    y_newbig = polynomial_regression.predict(X_new)
+    plt.plot(X_new, y_newbig, style, label=str(degree), linewidth=width)
+
+plt.plot(X, y, "b.", linewidth=3)
+plt.legend(loc="upper left")
+plt.xlabel("$x_1$", fontsize=18)
+plt.ylabel("$y$", rotation=0, fontsize=18)
+plt.axis([-3, 3, 0, 10])
+plt.title("high_degree_polynomials_plot")
+plt.show()
