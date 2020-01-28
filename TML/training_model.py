@@ -469,3 +469,20 @@ plt.ylabel("$y$", rotation=0, fontsize=18)
 plt.axis([-3, 3, 0, 10])
 plt.title("high_degree_polynomials_plot")
 plt.show()
+
+# Of course, this high-degree Polynomial Regression model is severely overfitting the
+# training data, while the linear model is underfitting it. The model that will generalize
+# best in this case is the quadratic model. It makes sense since the data was generated
+# using a quadratic model, but in general you won’t know what function generated the
+# data, so how can you decide how complex your model should be? How can you tell
+# that your model is overfitting or underfitting the data?
+# In Chapter 2 you used cross-validation to get an estimate of a model’s generalization
+# performance. If a model performs well on the training data but generalizes poorly
+# according to the cross-validation metrics, then your model is overfitting. 
+# If it performs poorly on both, then it is underfitting. This is one way to tell when a model is
+# too simple or too complex.
+# Another way is to look at the learning curves: these are plots of the model’s performance
+# on the training set and the validation set as a function of the training set size
+# (or the training iteration). To generate the plots, simply train the model several times
+# on different sized subsets of the training set.
+
