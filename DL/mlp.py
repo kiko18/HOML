@@ -9,10 +9,10 @@ import matplotlib.pyplot as plt
 
 
 
-class MyMLP():
+class MyMLP():  #consist of only one hidden layer
     
     def __init__(self, n_h = 4, num_iterations = 10000, learning_rate=0.01, print_cost=True):
-        self.n_h = n_h   #number of hidden layers
+        self.n_h = n_h   #number of neuron in hidden layer
         self.num_iterations = num_iterations
         self.learning_rate = learning_rate
         self.print_cost = print_cost
