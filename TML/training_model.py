@@ -82,8 +82,11 @@ X_new_b = np.c_[np.ones((3, 1)), X_new] # add x0 = 1 to each instance
 y_predict = X_new_b.dot(theta_best)
 
 # plot the prediction
-plt.plot(X_new, y_predict, "r--")
+plt.plot(X_new, y_predict, "r--", linewidth=2, label="Normal Equation - linear_model_predictions")
 plt.plot(X, y, "b.")
+plt.xlabel("$x_1$", fontsize=18)
+plt.ylabel("$y$", rotation=0, fontsize=18)
+plt.legend(loc="upper left", fontsize=14)
 plt.axis([0, 2, 0, 15])
 plt.show()
 
@@ -139,7 +142,6 @@ Gradient Descent
 # Fortunately, since the cost function is convex in the case of Linear Regression, the needle is 
 # simply at the bottom of the bowl.
 
-# While the Normal Equation can only perform Linear Regression, GD can be used to train many other models.
 
 '''
 Batch Gradient Descent
@@ -398,91 +400,3 @@ Polynomial Regression
 # A simple way to do this is to add powers of each feature as new features, 
 # then train a linear model on this extended set of features. 
 # This technique is called Polynomial Regression.
-
-m = 100
-X = 6 * np.random.rand(m, 1) - 3
-y = 0.5 * X**2 + X + 2 + np.random.randn(m, 1)
-
-plt.plot(X, y, "b.")
-plt.xlabel("$x_1$", fontsize=18)
-plt.ylabel("$y$", rotation=0, fontsize=18)
-plt.axis([-3, 3, 0, 10])
-plt.title("quadratic_data_plot")
-plt.show()
-
-# Clearly, a straight line will never fit this data properly. So let’s use Scikit-Learn’s PolynomialFeatures
-# class to transform our training data, adding the square (2nd-degree polynomial) of each feature in the 
-# training set as new features (in this case there is just one feature)
-
-from sklearn.preprocessing import PolynomialFeatures
-poly_features = PolynomialFeatures(degree=2, include_bias=False)
-X_poly = poly_features.fit_transform(X)
-print(X[0])
-print(X_poly[0])
-
-lin_reg = LinearRegression()
-lin_reg.fit(X_poly, y)
-print(lin_reg.intercept_, lin_reg.coef_)
-
-# Not bad: the model estimates y = 0.525 x1^2 + 0.95 x1 + 1.97 when in fact the original
-# function was y = 0.5 x1^2 + 1.0 x1 + 2.0 + Gaussian noise.
-
-X_new=np.linspace(-3, 3, 100).reshape(100, 1)   # generate some test data point
-X_new_poly = poly_features.transform(X_new)     # compute polynomial features for those new data point
-y_new = lin_reg.predict(X_new_poly)             # predict the y value for those data point
-plt.plot(X, y, "b.")                            # plot the traning data
-plt.plot(X_new, y_new, "r-", linewidth=2, label="Predictions")  # plot the predictions
-plt.xlabel("$x_1$", fontsize=18)
-plt.ylabel("$y$", rotation=0, fontsize=18)
-plt.legend(loc="upper left", fontsize=14)
-plt.axis([-3, 3, 0, 10])
-plt.title("quadratic_predictions_plot")
-plt.show()
-
-# If you perform high-degree Polynomial Regression, you will likely fit the training
-# data much better than with plain Linear Regression. Let For example applies
-# a 300-degree polynomial model to the preceding training data, and compares the
-# result with a pure linear model and a quadratic model (2nd-degree polynomial).
-# Notice how the 300-degree polynomial model wiggles around to get as close as possible
-# to the training instances.
-
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
-
-for style, width, degree in (("g-", 1, 300), ("b--", 2, 2), ("r-+", 2, 1)):
-    polybig_features = PolynomialFeatures(degree=degree, include_bias=False)
-    std_scaler = StandardScaler()
-    lin_reg = LinearRegression()
-    polynomial_regression = Pipeline([
-            ("poly_features", polybig_features),
-            ("std_scaler", std_scaler),
-            ("lin_reg", lin_reg),
-        ])
-    polynomial_regression.fit(X, y)
-    y_newbig = polynomial_regression.predict(X_new)
-    plt.plot(X_new, y_newbig, style, label=str(degree), linewidth=width)
-
-plt.plot(X, y, "b.", linewidth=3)
-plt.legend(loc="upper left")
-plt.xlabel("$x_1$", fontsize=18)
-plt.ylabel("$y$", rotation=0, fontsize=18)
-plt.axis([-3, 3, 0, 10])
-plt.title("high_degree_polynomials_plot")
-plt.show()
-
-# Of course, this high-degree Polynomial Regression model is severely overfitting the
-# training data, while the linear model is underfitting it. The model that will generalize
-# best in this case is the quadratic model. It makes sense since the data was generated
-# using a quadratic model, but in general you won’t know what function generated the
-# data, so how can you decide how complex your model should be? How can you tell
-# that your model is overfitting or underfitting the data?
-# In Chapter 2 you used cross-validation to get an estimate of a model’s generalization
-# performance. If a model performs well on the training data but generalizes poorly
-# according to the cross-validation metrics, then your model is overfitting. 
-# If it performs poorly on both, then it is underfitting. This is one way to tell when a model is
-# too simple or too complex.
-# Another way is to look at the learning curves: these are plots of the model’s performance
-# on the training set and the validation set as a function of the training set size
-# (or the training iteration). To generate the plots, simply train the model several times
-# on different sized subsets of the training set.
-
