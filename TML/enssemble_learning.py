@@ -33,13 +33,13 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import VotingClassifier
 from sklearn.metrics import accuracy_score
 
-# instanciate the classifiers
+# instanciate the 3 diverse classifiers as well as the voting clf
 log_clf = LogisticRegression(solver="liblinear", random_state=42)
 rnd_clf = RandomForestClassifier(n_estimators=10, random_state=42)
 svm_clf = SVC(gamma="auto", random_state=42)
 voting_clf = VotingClassifier(estimators=[('lr', log_clf), ('rf', rnd_clf), ('svc', svm_clf)], voting='hard')
 
-# train and evaluate the classifiers. 
+#Let's look at each classifier's accuracy on the test set:
 #the result will be that the voting classifier slighly outperforms all individual classifiers
 for clf in (log_clf, rnd_clf, svm_clf, voting_clf):
     clf.fit(X_train, y_train)
@@ -56,8 +56,10 @@ Another way is to train the same predictor on different random subset of the tra
 When this sampling (of training set) is performed with replacement (bootstraping), 
 this method is called bagging, otherwise it is called pasting.
 The following code train an enssemble of 500 Decision trees classifiers, each trained on
-100 instances randomly sampled from the training set with replecement (bootstrap = false),
-if you set bootstrap to false, it will be without replecement (pasting)
+100 instances randomly sampled from the training set with replecement (bootstrap = True),
+if you set bootstrap to False, it will be without replecement (pasting).
+
+
 '''
 from sklearn.ensemble import BaggingClassifier
 from sklearn.tree import DecisionTreeClassifier
@@ -68,7 +70,7 @@ bag_clf = BaggingClassifier(DecisionTreeClassifier(random_state=42),
                             bootstrap=True,     # sampling is done with replacement
                             n_jobs=-1,          # number of cpu core to use for training and predictions
                                                 # -1 tell sklearn to use all available cores
-                            oob_score=True,     # request an automatic out-of-bos evaluation after training
+                            oob_score=True,     # request an automatic out-of-bag evaluation after training.
                                                 # In fact, since a predictor never sees the oob instances
                                                 # during training, it can be evaluated on these instances,
                                                 # without the need for a separate validation set or cross-val
@@ -81,6 +83,23 @@ y_pred = bag_clf.predict(X_test)
 from sklearn.metrics import accuracy_score
 print('Bagging classifier', accuracy_score(y_test, y_pred))
 
+
+'''
+out-of-bag
+----------
+With bagging, some instances may be sampled several times for any given predictor,
+while others may not be sampled at all. By default a BaggingClassifier samples m
+training instances with replacement (bootstrap=True), where m is the size of the
+training set. This means that only about 63% of the training instances are sampled on
+average for each predictor.The remaining 37% of the training instances that are not
+sampled are called out-of-bag (oob) instances. Note that they are not the same 37%
+for all predictors.
+Since a predictor never sees the oob instances during training, it can be evaluated on
+these instances, without the need for a separate validation set. You can evaluate the
+ensemble itself by averaging out the oob evaluations of each predictor.
+In Scikit-Learn, you can set oob_score=True when creating a BaggingClassifier to
+request an automatic oob evaluation after training.
+'''
 # get the oob evaluation (it should be close to the enssemble classifier)
 bag_clf.fit(X_train, y_train)
 print('oob of Bagging classifier', bag_clf.oob_score_)
@@ -90,6 +109,17 @@ tree_clf = DecisionTreeClassifier(random_state=42)
 tree_clf.fit(X_train, y_train)
 y_pred_tree = tree_clf.predict(X_test)
 print('single tree classifier', accuracy_score(y_test, y_pred_tree))
+
+'''
+Bootstrapping introduces a bit more diversity in the subsets that each predictor istrained on, 
+so bagging ends up with a slightly higher bias than pasting, but this also means that predictors 
+end up being less correlated so the ensemble’s variance is reduced. 
+Overall, bagging often results in better models, which explains why it is generally preferred. 
+However, if you have spare time and CPU power you can use crossvalidation to evaluate both 
+bagging and pasting and select the one that works best.
+'''
+
+
 
 #we also have acess to the out of bag (oob) decision function for each instance
 #in the case, since the base estimator (tree) can estimate class probabilities
@@ -154,8 +184,25 @@ With a few exception, a RandomForestClassifier has all the hyperparams of a Deci
     presort is absent forced to false, 
     max_samples is absent forced to 1.0
     base_estimator is absent forced to DecisionTreeClassifier with provided hyperparams
+    
+https://sebastianraschka.com/faq/docs/bagging-boosting-rf.html    
+The random forest algorithm is actually a bagging algorithm: also here, we draw random bootstrap 
+samples from your training set. However, in addition to the bootstrap samples, we also draw random 
+subsets of features for training the individual trees; in bagging, we provide each tree with 
+the full set of features. Due to the random feature selection, the trees are more independent of 
+each other compared to regular bagging, which often results in better predictive performance 
+(due to better variance-bias trade-offs), and I’d say that it’s also faster than bagging, because 
+each tree learns only from a subset of features.    
 '''
 
+
+'''
+The Random Forest algorithm introduces extra randomness when growing trees;
+instead of searching for the very best feature when splitting a node (see Chapter 6), it
+searches for the best feature among a random subset of features. This results in a
+greater tree diversity, which (once again) trades a higher bias for a lower variance,
+generally yielding an overall better model.
+'''
 from sklearn.ensemble import RandomForestClassifier
 #instanciate the classifier
 rnd_clf = RandomForestClassifier(n_estimators=500,  #500 trees
@@ -223,12 +270,13 @@ print('extra tree accuracy =', accuracy_score(y_test, y_pred_extra_tree))
 
 
 '''
-Yet another great quality of random forest is that they make it easy to measure the relative importance of each feature.
-The importance of a feature is measured by looking at how much the tree nodes that use that feature reduce impurity 
-on average (across the tree in the forest). More precisely it is a weighted average, where each node weight is equal
-to the number of trainng samples that are associated with it.
-Sklearn compute this score automatically for each feature after training (accessed via feature_importances_), 
-then it scale the results such that the sum of all importances is equal to 1.
+Yet another great quality of random forest is that they make it easy to measure the relative 
+importance of each feature. The importance of a feature is measured by looking at how much the 
+tree nodes that use that feature reduce impurity on average (across the tree in the forest). 
+More precisely it is a weighted average, where each node weight is equal to the number of trainng 
+samples that are associated with it.
+Sklearn compute this score automatically for each feature after training (accessed via 
+feature_importances_), then it scale the results such that the sum of all importances is equal to 1.
 '''
 # load iris data
 from sklearn.datasets import load_iris

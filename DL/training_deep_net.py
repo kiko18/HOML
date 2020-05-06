@@ -9,6 +9,108 @@ from tensorflow import keras
 import matplotlib.pyplot as plt
 import numpy as np
 
+
+'''
+In Chapter 10 we introduced artificial neural networks and trained our first deep
+neural networks. But they were very shallow nets, with just a few hidden layers.
+What if you need to tackle a very complex problem, such as detecting hundreds 
+of types of objects in high-resolution images? You may need to train a much deeper DNN, 
+perhaps with 10 layers or much more, each containing hundreds of neurons, connected
+by hundreds of thousands of connections. This would not be a walk in the park:
+- First, you would be faced with the tricky vanishing gradients problem (or the
+  related exploding gradients problem) that affects deep neural networks and makes
+  lower layers very hard to train.
+- Second, you might not have enough training data for such a large network, or it
+  might be too costly to label.
+- Third, training may be extremely slow.
+- Fourth, a model with millions of parameters would severely risk overfitting the
+  training set, especially if there are not enough training instances, or they are too
+  noisy.
+In this chapter, we will go through each of these problems in turn and present techniques
+to solve them.
+'''
+
+
+'''  
+Vanishing/Exploding Gradients Problems
+--------------------------------------
+To summe up: 
+    - Vanishing/expliding Gradient is the problem that the layers doesn't learn at the same speed
+      some layers learn quickly while oder stay virtually unchanged after gradient update.
+    - Glorot and bengio showed in 2010 that this problem is due to a combination of poor random 
+      initialisation and (at that time popular) sigmoid activation function. which cause the
+      variance at the output of each layers to be more greater than the variance of its input.
+    - To solve this problem, they propose a weight initialization method called Xavier 
+      initialization. Which enssure that the variance of the outputs of each layer is equal to the 
+      variance of its inputs. Moreover, it ensure that the gradients has equal variance before and 
+      after flowing through a layer in the reverse direction. It is actually not possible to 
+      guarantee both unless the layer has an equal number of inputs (fan-in) and neurons (fan-out),
+      but they proposed a good compromise that has proven to work very well in practice.
+      
+Detailled version:      
+As we discussed in Chapter 10, the backpropagation algorithm works by going from
+the output layer to the input layer, propagating the error gradient on the way. 
+Once the algorithm has computed the gradient of the cost function with regards to each
+parameter in the network, it uses these gradients to update each parameter with a
+Gradient Descent step.
+Unfortunately, gradients often get smaller and smaller as the algorithm progresses
+down to the lower layers. As a result, the Gradient Descent update leaves the lower
+layer connection weights virtually unchanged, and training never converges to a good
+solution. This is called the vanishing gradients problem. In some cases, the opposite
+can happen: the gradients can grow bigger and bigger, so many layers get insanely
+large weight updates and the algorithm diverges. This is the exploding gradients problem,
+which is mostly encountered in recurrent neural networks. More generally,
+deep neural networks suffer from unstable gradients; different layers may learn at
+widely different speeds.
+Although this unfortunate behavior has been empirically observed for quite a while
+(it was one of the reasons why deep neural networks were mostly abandoned for a
+long time), it is only around 2010 that significant progress was made in understanding it. 
+A paper titled “Understanding the Difficulty of Training Deep Feedforward Neural Networks” 
+by Xavier Glorot and Yoshua Bengio found a few suspects, including the combination of the 
+popular logistic sigmoid activation function and the weight initialization technique that was 
+most popular at the time, namely random initialization using a normal distribution with a 
+mean of 0 and a standard deviation of 1.
+In short, they showed that with this activation function and this initialization scheme,
+the variance of the outputs of each layer is much greater than the variance of its
+inputs. Going forward in the network, the variance keeps increasing after each layer
+until the activation function saturates at the top layers. This is actually made worse by
+the fact that the logistic function has a mean of 0.5, not 0 (the hyperbolic tangent
+function has a mean of 0 and behaves slightly better than the logistic function in deep
+networks).
+Looking at the logistic activation function, you can see that when inputs become large 
+(negative or positive), the function saturates at 0 or 1, with a derivative extremely close to 0. 
+Thus when backpropagation kicks in, it has virtually no gradient to propagate back through the 
+network, and what little gradient exists keeps getting diluted as backpropagation progresses 
+down through the top layers, so there is really nothing left for the lower layers.
+
+Glorot and He Initialization
+----------------------------
+In their paper, Glorot and Bengio propose a way to significantly alleviate this problem.
+We need the signal to flow properly in both directions: in the forward direction
+when making predictions, and in the reverse direction when backpropagating gradients.
+We don’t want the signal to die out, nor do we want it to explode and saturate.
+For the signal to flow properly, the authors argue that we need the variance of the
+outputs of each layer to be equal to the variance of its inputs, and we also need the
+gradients to have equal variance before and after flowing through a layer in the
+reverse direction (please check out the paper if you are interested in the mathematical
+details). It is actually not possible to guarantee both unless the layer has an equal
+number of inputs (fan-in) and neurons (fan-out), but they proposed a good compromise that has proven 
+to work very well in practice: the connection weights of each layer must be initialized randomly 
+such that they have: 
+    - Normal distribution with mean 0 
+    - Normal distribution with variance σ^2 = 1/fan_avg with fan_avg = (fan_in + fan_out) /2.
+Using Glorot initialization can speed up training considerably, and it is one of the tricks 
+that led to the current success of Deep Learning.
+'''
+
+
+
+
+
+
+
+
+
 '''
 Transfer Learning
 -----------------

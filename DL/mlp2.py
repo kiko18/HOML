@@ -60,7 +60,7 @@ del X_train_full, y_train_full
 
 '''
 Building a Classification MLP Using the Sequential API
---------------------------------------------------
+-----------------------------------------------------
 We will see how to build, train, evaluate and use a classification MLP using the Sequential API
 '''
 # Now let’s build the neural network! Here is a classification MLP with two hidden layers:
@@ -264,8 +264,17 @@ from sklearn.preprocessing import StandardScaler
 
 housing = fetch_california_housing()
 
+'''
+we can use pandas to better analyse the data
+'''
+import pandas as pd
+df = pd.DataFrame(data=housing.data, columns= housing.feature_names)
+df.hist(bins=50, figsize=(20,15))
+
 X_train_full, X_test, y_train_full, y_test = train_test_split(housing.data, housing.target, random_state=42)
 X_train, X_valid, y_train, y_valid = train_test_split(X_train_full, y_train_full, random_state=42)
+
+del X_train_full, y_train_full
 
 # scale the features
 scaler = StandardScaler()
@@ -473,8 +482,8 @@ when training on large datasets you should not only save your model at the end o
 training, but also save checkpoints at regular intervals during training.
 The fit() method accepts a callbacks argument that lets you specify a list of objects
 that Keras will call during training at the start and end of training, at the start and end
-of each epoch and even before and after processing each batch. For example, the Mod
-elCheckpoint callback saves checkpoints of your model at regular intervals during
+of each epoch and even before and after processing each batch. For example, the 
+ModelCheckpoint callback saves checkpoints of your model at regular intervals during
 training, by default at the end of each epoch.
 
 Moreover, if you use a validation set during training, you can set
@@ -626,13 +635,13 @@ initialization logic, and much more. How do you know what combination of hyperpa
 is the best for your task?
 
 One option is to simply try many combinations of hyperparameters and see which
-one works best on the validation set (or using K-fold cross-validation). For this, one
-approach is simply use GridSearchCV or RandomizedSearchCV to explore the hyperparameter
+one works best on the validation set (or using K-fold cross-validation). 
+For example, we can use GridSearchCV or RandomizedSearchCV to explore the hyperparameter
 space, as we did in Chapter 2
 
-For this, we need to wrap our Keras models in objects that mimic regular Scikit-Learn regressors. 
-The first step is to create a function that will build and compile a Keras model, 
-given a set of hyperparameters
+To do this, we need to wrap our Keras models in objects that mimic regular Scikit-Learn 
+regressors. The first step is to create a function that will build and compile a Keras model, 
+given a set of hyperparameters.
 '''
 
 # build and compile a Keras model, given a set of hyperparameters
@@ -790,3 +799,119 @@ dubbed the “stretch pants” approach:17 instead of wasting time looking for p
 perfectly match your size, just use large stretch pants that will shrink down to the
 right size.
 '''
+
+'''
+Hpyer params tuning example
+--------------------------
+Train a deep MLP on the MNIST dataset (you can load it using keras.datasets.mnist.load_data(). 
+See if you can get over 98% precision. Try searching for the optimal learning rate by using 
+the approach presented in this chapter (i.e., by growing the learning rate exponentially, 
+plotting the loss, and finding the point where the loss shoots up). Try adding all the bells 
+and whistles—save checkpoints, use early stopping, and plot learning curves using TensorBoard.
+'''
+import tensorflow as tf
+from tensorflow.keras.datasets import mnist
+(X_train_full, y_train_full), (X_test, y_test) = mnist.load_data()
+print(X_train_full.shape)
+
+X_valid, X_train = X_train_full[:5000] / 255., X_train_full[5000:] / 255.
+y_valid, y_train = y_train_full[:5000], y_train_full[5000:]
+X_test = X_test / 255.
+
+plt.imshow(X_train[0], cmap="binary")
+plt.axis('off')
+plt.show()
+
+K = tf.keras.backend
+
+# Thi is a callback. Remember that callback are call during training: 
+#   - at the start and end of training, 
+#   - at the start and end of each epoch 
+#   - and even before and after processing each batch
+class ExponentialLearningRate(keras.callbacks.Callback):
+    def __init__(self, factor):
+        self.factor = factor
+        self.rates = []
+        self.losses = []
+    def on_batch_end(self, batch, logs):
+        self.rates.append(K.get_value(self.model.optimizer.lr))
+        self.losses.append(logs["loss"])
+        K.set_value(self.model.optimizer.lr, self.model.optimizer.lr * self.factor)
+        #the last line set the learning rate to a by factor increased value
+        #this is the same as lr = lr * factor
+        #the method on_batch_end is inherited from the Callback class
+        
+tf.keras.backend.clear_session()
+np.random.seed(42)
+tf.random.set_seed(42)
+
+model = keras.models.Sequential([
+    keras.layers.Flatten(input_shape=[28, 28]),
+    keras.layers.Dense(300, activation="relu"),
+    keras.layers.Dense(100, activation="relu"),
+    keras.layers.Dense(10, activation="softmax")
+])
+
+#We will start with a small learning rate of 1e-3, and grow it by 0.5% at each iteration:
+model.compile(loss="sparse_categorical_crossentropy",
+              optimizer=keras.optimizers.SGD(lr=1e-3),
+              metrics=["accuracy"])
+expon_lr = ExponentialLearningRate(factor=1.005)
+
+#Now let's train the model for just 1 epoch:
+history = model.fit(X_train, y_train, epochs=1,
+                    validation_data=(X_valid, y_valid),
+                    callbacks=[expon_lr])   
+                    # the callback will be executed at the end of each batch
+                    #since we didn't specify a batch_size, the default (32) is used
+                    # this mean they will be X_train.shape[0]/32 = 1719 run
+                    # for which we will have the lr and the losses, as we store
+                    # them our callback class
+
+# We can now plot the loss as a functionof the learning rate:
+plt.plot(expon_lr.rates, expon_lr.losses)
+plt.gca().set_xscale('log')
+plt.hlines(min(expon_lr.losses), min(expon_lr.rates), max(expon_lr.rates))
+plt.axis([min(expon_lr.rates), max(expon_lr.rates), 0, expon_lr.losses[0]])
+plt.xlabel("Learning rate")
+plt.ylabel("Loss")
+
+#the loss is low between 1e-1 ans 3e-1
+#The loss starts shooting back up violently around 3e-1, 
+#so let's try using 2e-1 as our learning rate:
+tf.keras.backend.clear_session()
+np.random.seed(42)
+tf.random.set_seed(42)
+
+model = keras.models.Sequential([
+    keras.layers.Flatten(input_shape=[28, 28]),
+    keras.layers.Dense(300, activation="relu"),
+    keras.layers.Dense(100, activation="relu"),
+    keras.layers.Dense(10, activation="softmax")
+])
+
+model.compile(loss="sparse_categorical_crossentropy",
+              optimizer=keras.optimizers.SGD(lr=2e-1),
+              metrics=["accuracy"])
+
+run_index = 1 # increment this at every run
+run_logdir = os.path.join(os.curdir, "my_mnist_logs", "run_{:03d}".format(run_index))
+run_logdir
+
+'./my_mnist_logs/run_001'
+
+early_stopping_cb = keras.callbacks.EarlyStopping(patience=20)
+checkpoint_cb = keras.callbacks.ModelCheckpoint("my_mnist_model.h5", save_best_only=True)
+tensorboard_cb = keras.callbacks.TensorBoard(run_logdir)
+
+history = model.fit(X_train, y_train, epochs=100,
+                    validation_data=(X_valid, y_valid),
+                    callbacks=[early_stopping_cb, checkpoint_cb, tensorboard_cb])
+
+model = keras.models.load_model("my_mnist_model.h5") # rollback to best model
+model.evaluate(X_test, y_test)
+
+
+#We got over 98% accuracy. Finally, let's look at the learning curves using TensorBoard:
+#%tensorboard --logdir=./my_mnist_logs --port=6006
+

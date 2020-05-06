@@ -7,14 +7,18 @@ Created on Tue Jul 23 11:12:18 2019
 
 '''
 Decision trees (like svm) are versatile ML algo that can perform both classification and regression tasks.
-They are very poweful algo capable of fitting complex datasets.
+And even multi output task. They are very poweful algo capable of fitting complex datasets.
+
 They are also the fundamental components of Random Forets, which are amoung the most powerful ML algo
 available today.
-One of the many qualities of Decision Trees is that they require very little data preparation. In particular,
-they don't require feature scaling or centering at all. On the other side, it makes very few assomptions 
-about the training data as opposed to linear models for example, which obviously assume that the data is linear.
+
+One of the many qualities of Decision Trees is that they require very little data preparation. 
+In particular, they don't require feature scaling or centering at all. On the other side, it makes very 
+few assomptions about the training data as opposed to linear models for example, which obviously assume 
+that the data is linear.
 '''
 # Common imports
+import os
 import numpy as np
 
 # to make this notebook's output stable across runs
@@ -25,6 +29,10 @@ import matplotlib.pyplot as plt
 
 from sklearn.datasets import load_iris
 from sklearn.tree import DecisionTreeClassifier
+
+
+#classes names
+classes_names = ['setosa', 'versicolor', 'virgina']
 
 
 # load iris dataset
@@ -40,21 +48,26 @@ tree_clf.fit(X, y)
 
 '''
 We can visualize the trained Decision Tree by first using the export_graphviz() method to output a graph
-definition file .dot, then we can convert this fiile to a variety of format such as pdf or png using the
+definition file .dot, then we can convert this file to a variety of format such as pdf or png using the
 dot command-line tool from graphviz package:  dot -Tpng iris_tree.dot -o iris_tree.png
-we can also visualize directely in graphviz online.
+
+You first need to install graphviz with: conda install python-graphviz
     
 '''
 from sklearn.tree import export_graphviz
 
+IMAGES_PATH = 'C:/Users/BT/Documents/others/tf'
 export_graphviz(
         tree_clf,
-        out_file='C:/Users/BT/Documents/others/tf/iris_tree.dot',
+        out_file=os.path.join(IMAGES_PATH, "iris_tree.dot"),
         feature_names=iris.feature_names[2:],
         class_names=iris.target_names,
         rounded=True,
         filled=True
     )
+
+# open annaconda prompt and run:
+# dot -Tpng iris_tree.dot -o iris_tree.png
 
 '''
 Each node has 4 attributes:
@@ -66,22 +79,22 @@ Each node has 4 attributes:
     - gini:     Impurity of the node. 
                 a node is pure (gini=0), if all training instances it applies to belong to the same class.
                 The gini impurity measure is computed as follow: G(i) = 1 - sum(square(p_i,k))_k =1,...,n
-                n is the number of classes, p_i,k = ratio of class k instances amoung the training instances in
-                the i^th node.
+                n is the number of classes, p_i,k = ratio of class k instances amoung the training 
+                instances in the i^th node.
                 For the depth-2 left node for example gini = 1 - (0/54)^2 - (49/54)^2 - (5/54)^2 = 0.168
                 Note that 0/54=0% is the proba for setosa, 49/54=90.74% proba for versicolor, etc
 
-Note that sklearn use CART algorithm, which produces only binary trees: nonleaf node always have two children
-(i.e., questions only have yes or no answers). However, other algorithms such as ID3 can produce Decision Trees
-with nodes that have more than 2 children.
+Note that sklearn use CART algorithm, which produces only binary trees: nonleaf node always have two 
+children (i.e., questions only have yes or no answers). However, other algorithms such as ID3 can produce 
+Decision Trees with nodes that have more than 2 children.
 '''
 
 
 '''
 Estimating class proba
 ----------------------
-A decision Tree can also estimate the probability that an instance belongs to a particular class.
-To do so, it traverse the tree to find the leaf node for this instance, then it return the ratio/proba
+A decision Tree can also estimate the probability that an instance belongs to a particular class k.
+To do so, it traverse the tree to find the leaf node for this instance, then it return the ratio
 of training instances of class k in this node, finally the instance is attributed to the class with
 the highest ratio.
 For example, supose we have find a flower whose petals are 5cm long and 1.5cm wide. 
@@ -90,15 +103,17 @@ The correpsonding leaf node is the depth-2 left node, so the decision tree shoul
 will then be iris-versicolor.
 '''
 flower = [[5, 1.5]]             #found flower
-tree_clf.predict_proba(flower)  #predict proba for each class
-tree_clf.predict(flower)        #predict class to which flower belong
+proba_flower = tree_clf.predict_proba(flower)  #predict proba for each class
+class_flower = tree_clf.predict(flower)        #predict class to which flower belong
+
+print('proba_flower: ', proba_flower)
+print('class_flower: ', classes_names[class_flower.squeeze()])
 
 # compute how gut the classifier do on the training data
 from sklearn.metrics import f1_score
 y_pred = tree_clf.predict(X)
 fscore = f1_score(y, y_pred, average='weighted') 
 print('F1 score (depth-2 classifier) = ', fscore)
-
 
 
 from matplotlib.colors import ListedColormap
@@ -143,8 +158,8 @@ plt.show()
 '''
 we can show that classifier will do better if we increase the depth of the tree.
 Since it will therefore capture more information to be able to diferenciate between versicolor and virgina.
-If we look at the previous figure we see that a flower with lengh 6cm and width 1.5cm is most likely a virgina,
-however, with a depth-2 classifier it will be classified as a versicolor (petal width < 1.75)
+If we look at the previous figure we see that a flower with lengh 6cm and width 1.5cm is most likely a 
+virgina, however, with a depth-2 classifier it will be classified as a versicolor (petal width < 1.75)
 '''
 tree_depth = 3
 tree_clf = DecisionTreeClassifier(max_depth=tree_depth, random_state=42) #max_depth set how many row we will have
@@ -157,21 +172,33 @@ print('F1 score (depth-',tree_depth, ' classifier) = ', fscore_2)
 '''
 hyperparams
 -----------
-Decision trees belong to the so called nonparametric model, not because it does not have any parameters
-(it often has a lot) but because the number of parameters is not determined prior to training, 
-so the model structure is free to stick closely to the training data, and most  likely overfiting it.
-To avoid overfiting the training data, we need to restrict the Decision tree freedom during training.
-As we already know, this is called regularization. Some parameters, which we often restrict are:
-    - max_deph: the maximum depth of the tree
-    - min_samples_split: the minimun number of samples a node must have before it can be split
-    - min_samples_leaf: the minimun number of samples a leaf node must have
-    - max_features: the maximun number of features that are evaluated for spliting at each node
-    
-In the example above we classified he moons dataset with two diferent decision tree classifier,
-one with default hyperparams (no restritions), the other with min_samples_leaf = 4.
-As we see, the clf with no restrictions overfit the training data and will not gut generalize
-'''
+Decision trees belong to the so called nonparametric model, not because it does not 
+have any parameters (parameters to be learn) (it often has a lot) but because the 
+number of parameters is not determined prior to training, so the model structure is 
+free to stick closely to the training data, and most  likely overfiting it.
 
+In contrast, a parametric model such as a linear model has a predetermined number of 
+parameters, so its degree of freedom is limited, reducing the risk of overfitting 
+(but increasing the risk of underfitting).
+
+To avoid overfiting the training data, we need to restrict the Decision tree freedom 
+during training. As we already know, this is called regularization. Some parameters, 
+which we often restrict are:
+    - max_deph: the maximum depth of the tree (default None -> unlimited)
+                Reducing max_depth will regularize the model and thus reduce the risk
+                of overfitting
+                
+    - min_samples_split: the minimun number of samples a node must have before it can 
+                         be split
+    - min_samples_leaf: the minimun number of samples a leaf node must have
+    - max_features: the maximun number of features that are evaluated for spliting at 
+                    each node
+    
+In the example above we classified the moons dataset with two diferent decision tree 
+classifier, one with default hyperparams (no restritions), the other with 
+min_samples_leaf = 4. As we see, the clf with no restrictions overfit the training 
+data and will not generalize well.
+'''
 
 from sklearn.datasets import make_moons
 from sklearn.model_selection import train_test_split
@@ -209,6 +236,8 @@ grid_search_cv = GridSearchCV(DecisionTreeClassifier(random_state=42), params, n
 grid_search_cv.fit(Xm_train, ym_train)
 # get the best classifier
 clf_best = grid_search_cv.best_estimator_
+print("best_score: ", grid_search_cv.best_score_)
+print("best_params:", grid_search_cv.best_params_)
 # predict using best classifier
 ym_pred = clf_best.predict(Xm_test)
 #compute accuracy score
@@ -254,8 +283,6 @@ print('test accuracy = ', clf2.score(X_test.T, y_test.T))
 
 
 
-
-
 '''
 regression Trees
 ----------------
@@ -283,25 +310,26 @@ export_graphviz(
         filled=True
     )
 
-
+# open annaconda prompt and run:
+# dot -Tpng iris_tree.dot -o iris_tree.png
 '''
-Just like for classification tasks, Decision Trees are prone to overfitting when dealing with 
-regression tasks. Therefore we must restricts the regressor freedom before training
+Just like for classification tasks, Decision Trees are prone to overfitting when dealing 
+with regression tasks. Therefore we must restricts the regressor freedom before training
 '''
 tree_reg1 = DecisionTreeRegressor(random_state=42)
 tree_reg2 = DecisionTreeRegressor(random_state=42, min_samples_leaf=10)
 tree_reg1.fit(X, y)
 tree_reg2.fit(X, y)
 
-x1 = np.linspace(0, 1, 500).reshape(-1, 1)
-y_pred1 = tree_reg1.predict(x1)
-y_pred2 = tree_reg2.predict(x1)
+x_test = np.linspace(0, 1, 500).reshape(-1, 1)
+y_pred1 = tree_reg1.predict(x_test)
+y_pred2 = tree_reg2.predict(x_test)
 
 plt.figure(figsize=(11, 4))
 
 plt.subplot(121)
 plt.plot(X, y, "b.")
-plt.plot(x1, y_pred1, "r.-", linewidth=2, label=r"$\hat{y}$")
+plt.plot(x_test, y_pred1, "r.-", linewidth=2, label=r"$\hat{y}$")
 plt.axis([0, 1, -0.2, 1.1])
 plt.xlabel("$x_1$", fontsize=18)
 plt.ylabel("$y$", fontsize=18, rotation=0)
@@ -310,7 +338,7 @@ plt.title("No restrictions", fontsize=14)
 
 plt.subplot(122)
 plt.plot(X, y, "b.")
-plt.plot(x1, y_pred2, "r.-", linewidth=2, label=r"$\hat{y}$")
+plt.plot(x_test, y_pred2, "r.-", linewidth=2, label=r"$\hat{y}$")
 plt.axis([0, 1, -0.2, 1.1])
 plt.xlabel("$x_1$", fontsize=18)
 plt.title("min_samples_leaf={}".format(tree_reg2.min_samples_leaf), fontsize=14)
@@ -320,7 +348,7 @@ plt.show()
 
 '''
 Instability
---------
+-----------
 Decision Tree are very simple to understand and interpret, easy to use, versatile and powerfull.
 However they have a few limitations. In fact, they love orthogonal decision boundaries (all split
 are perpendicular to an axis), which makes them sensitive to training set rotation.
@@ -328,7 +356,8 @@ For example the above figure show a very simple linear separable dataset.
 On the left, a decision tree can split it easily, while on the right after the dataset is rotated 
 by 45 degree, the decision boundary look unnecessary convoluted. although both decision Trees 
 fit the training set perfectely, it is very likely that the model on the right will not generalize well.
-One way to limit this problem is to use PCA, which often result in a better orientation of he training data.
+One way to limit this problem is to use PCA, which often result in a better orientation of the training 
+data.
 '''
 
 np.random.seed(6)
