@@ -5,6 +5,51 @@ Created on Sat May  9 17:23:20 2020
 @author: BT
 """
 
+
+'''
+In the last few years, thanks to the increase in computational power, 
+the amount of available training data, and the tricks presented in Chapter 11 
+for training deep nets, CNNs have managed to achieve superhuman performance on 
+some complex visual tasks. They power image search services, self-driving cars, 
+automatic video classification systems, and more.
+
+Why not simply use a regular deep neural network with fully connected
+layers for image recognition tasks? Unfortunately, although
+this works fine for small images (e.g., MNIST), it breaks down for
+larger images because of the huge number of parameters it
+requires. For example, a 100 × 100 image has 10,000 pixels, and if
+the first layer has just 1,000 neurons (which already severely
+restricts the amount of information transmitted to the next layer),
+this means a total of 10 million connections. And that’s just the first
+layer. CNNs solve this problem using partially connected layers and
+weight sharing.
+
+In a CNN, each neuron in the second convolutional layer is connected
+only to neurons located within a small rectangle in the first layer. This architecture
+allows the network to concentrate on small low-level features in the first hidden layer,
+then assemble them into larger higher-level features in the next hidden layer, and so
+on. This hierarchical structure is common in real-world images, which is one of the
+reasons why CNNs work so well for image recognition.
+
+In order for a layer to have the same height and width as the previous layer, 
+it is common to add zeros around the inputs, as shown in the diagram. 
+This is called zero padding. It is also possible to connect a large input layer 
+to a much smaller layer by spacing out the receptive fields. 
+The shift from one receptive field to the next is called the stride.
+
+A layer full of neurons using the same filter outputs a feature map, which highlights 
+the areas in an image that activate the filter the most. Of course you do not have to 
+define the filters manually: instead, during training the convolutional layer will 
+automatically learn the most useful filters for its task, and the layers above will 
+learn to combine them into more complex patterns.
+'''
+
+
+
+
+
+
+
 '''
 Pretrained Models for Transfer Learning
 ---------------------------------------
