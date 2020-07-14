@@ -228,7 +228,6 @@ history = model_B.fit(X_train_B, y_train_B,
 
 
 ''' Reuse weight of model A to train Model B'''
-
 model_A = keras.models.load_model("my_model_A.h5")              # load model A
 model_B_on_A = keras.models.Sequential(model_A.layers[:-1])     # create a new model, add all layers of A except the output layer
 model_B_on_A.add(keras.layers.Dense(1, activation="sigmoid"))   # add an output layer, which will be initialized randomly
