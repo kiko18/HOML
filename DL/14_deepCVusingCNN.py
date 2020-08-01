@@ -46,24 +46,207 @@ learn to combine them into more complex patterns.
 
 import numpy as np
 from sklearn.datasets import load_sample_image
+import tensorflow as tf
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import tensorflow_datasets as tfds
+import numpy as np
 
+def plot_image(image):
+    plt.imshow(image, cmap="gray", interpolation="nearest")
+    plt.axis("off")
+
+def plot_color_image(image):
+    plt.imshow(image, interpolation="nearest")
+    plt.axis("off")
+
+def crop(images):
+    return images[150:220, 130:250]
+    
 # Load sample images
 china = load_sample_image("china.jpg") / 255
 flower = load_sample_image("flower.jpg") / 255
-images = np.array([china, flower])
+images = np.array([china, flower]) 
 batch_size, height, width, channels = images.shape
 
-# Create 2 filters
+# Create 2 fi
 filters = np.zeros(shape=(7, 7, channels, 2), dtype=np.float32)
 filters[:, 3, :, 0] = 1  # vertical line (first filter)
 filters[3, :, :, 1] = 1  # horizontal line (second filter)
 
+'''
+Convolution layer:
+-----------------
+- images is the input mini-batch. In tf a mini-batch is represented as a 4D tensor of 
+  shape [mini-batch size, height, width, channels].
+- filters is the set of filters to apply. The weights of a convolutional layer 
+  (also the filters) are represented as a 4D tensor of shape [fh, fw, fn′, fn]
+- strides is equal to 1, but it could also be a 1D array with 4 elements, where the
+  two central elements are the vertical and horizontal strides (sh and sw). The first
+  and last elements must currently be equal to 1. They may one day be used to
+  specify a batch stride (to skip some instances) and a channel stride (to skip some
+  of the previous layer’s feature maps or channels).
+- padding must be either "VALID" or "SAME": 
+    * If set to "VALID", the convolutional layer does not use zero padding, 
+      and may ignore some rows and columns at the bottom and right of the input image, 
+      depending on the stride
+    * If set to "SAME", the convolutional layer uses zero padding if necessary. 
+      In this case, the number of output neurons is equal to the number of input neurons
+      divided by the stride, rounded up. Then zeros are added as evenly as possible 
+      around the inputs.
+'''
 outputs = tf.nn.conv2d(images, filters, strides=1, padding="SAME")
 
 plt.imshow(outputs[0, :, :, 1], cmap="gray") # plot 1st image's 2nd feature map
 plt.axis("off") # Not shown in the book
 plt.show()
 
+
+for image_index in (0, 1):
+    for feature_map_index in (0, 1):
+        plt.subplot(2, 2, image_index * 2 + feature_map_index + 1)
+        plot_image(outputs[image_index, :, :, feature_map_index])
+
+plt.show()
+
+
+
+plot_image(crop(images[0, :, :, 0]))
+plt.show()
+
+for feature_map_index, filename in enumerate(["china_vertical", "china_horizontal"]):
+    plot_image(crop(outputs[0, :, :, feature_map_index]))
+    plt.show()
+
+plot_image(filters[:, :, 0, 0])
+plt.show()
+plot_image(filters[:, :, 0, 1])
+plt.show()
+
+
+'''
+Memory Requirements
+-------------------
+Another problem with CNNs is that the convolutional layers require a huge amount of RAM. 
+This is especially true during training, because the reverse pass of backpropagation
+requires all the intermediate values computed during the forward pass.
+For example, consider a convolutional layer with 5 × 5 filters, outputting 200 feature
+maps of size 150 × 100, with stride 1 and SAME padding. If the input is a 150 × 100
+RGB image (three channels), then the number of parameters is (5 × 5 × 3 + 1) × 200
+= 15,200 (the +1 corresponds to the bias terms), which is fairly small compared to a
+fully connected layer. (A fully connected layer with 150 × 100 neurons, each connected to all 
+150 × 100 × 3 inputs, would have 1502 × 1002 × 3 = 675 million parameters!)
+
+However, each of the 200 feature maps contains 150 × 100 neurons,
+and each of these neurons needs to compute a weighted sum of its 5 × 5 × 3 = 75 inputs: 
+that’s a total of 225 million float multiplications. Not as bad as a fully connected
+layer, but still quite computationally intensive. Moreover, if the feature maps
+are represented using 32-bit floats, then the convolutional layer’s output will occupy
+200 × 150 × 100 × 32 = 96 million bits (12 MB) of RAM. (In the international system of units 
+(SI), 1 MB = 1,000 kB = 1,000 × 1,000 bytes = 1,000 × 1,000 × 8 bits.)
+
+And that’s just for one instance! If a training batch contains 100 instances, 
+then this layer will use up 1.2 GB of RAM!
+During inference (i.e., when making a prediction for a new instance) the RAM occupied
+by one layer can be released as soon as the next layer has been computed, so you
+only need as much RAM as required by two consecutive layers. But during training
+everything computed during the forward pass needs to be preserved for the reverse
+pass, so the amount of RAM needed is (at least) the total amount of RAM required by
+all layers.
+
+If training crashes because of an out-of-memory error, you can try
+reducing the mini-batch size. Alternatively, you can try reducing
+dimensionality using a stride, or removing a few layers. Or you can
+try using 16-bit floats instead of 32-bit floats. Or you could distribute
+the CNN across multiple devices.
+'''
+
+
+'''
+Pooling Layer
+-------------
+Once you understand how convolutional layers work, the pooling layers are quite
+easy to grasp. Their goal is to subsample (i.e., shrink) the input image in order to
+reduce the computational load, the memory usage, and the number of parameters
+(thereby limiting the risk of overfitting).
+Just like in convolutional layers, each neuron in a pooling layer is connected to the
+outputs of a limited number of neurons in the previous layer, located within a small
+rectangular receptive field. You must define its size, the stride, and the padding type,
+just like before. However, a pooling neuron has no weights; all it does is aggregate the
+inputs using an aggregation function such as the max or mean. in Max pooling layer, 
+only the max input value in each receptive field is propagated to the next layer, 
+while the other inputs are dropped. A pooling layer typically works on every input channel 
+independently, so the output depth is the same as the input depth.
+
+Other than reducing computations, memory usage and the number of parameters, a
+max pooling layer also introduces some level of invariance to small translations.
+Moreover, max pooling also offers a small amount of rotational invariance and a
+slight scale invariance. Such invariance (even if it is limited) can be useful in cases
+where the prediction should not depend on these details, such as in classification
+tasks.
+
+But max pooling has some downsides: firstly, it is obviously very destructive: even
+with a tiny 2 × 2 kernel and a stride of 2, the output will be two times smaller in both
+directions (so its area will be four times smaller), simply dropping 75% of the input
+values. And in some applications, invariance is not desirable, for example for semantic
+segmentation: this is the task of classifying each pixel in an image depending on the
+object that pixel belongs to: obviously, if the input image is translated by 1 pixel to the
+right, the output should also be translated by 1 pixel to the right. The goal in this case
+is equivariance, not invariance: a small change to the inputs should lead to a corresponding
+small change in the output.
+
+Implementing a max pooling layer in TensorFlow is quite easy. The following code
+creates a max pooling layer using a 2 × 2 kernel. The strides default to the kernel size,
+so this layer will use a stride of 2 (both horizontally and vertically). By default, it uses
+VALID padding (i.e., no padding at all):
+'''
+max_pool = tf.keras.layers.MaxPool2D(pool_size=2)
+
+cropped_images = np.array([crop(image) for image in images], dtype=np.float32)
+output = max_pool(cropped_images)
+
+fig = plt.figure(figsize=(12, 8))
+gs = mpl.gridspec.GridSpec(nrows=1, ncols=2, width_ratios=[2, 1])
+
+ax1 = fig.add_subplot(gs[0, 0])
+ax1.set_title("Input", fontsize=14)
+ax1.imshow(cropped_images[0])  # plot the 1st image
+ax1.axis("off")
+ax2 = fig.add_subplot(gs[0, 1])
+ax2.set_title("Output", fontsize=14)
+ax2.imshow(output[0])  # plot the output for the 1st image
+ax2.axis("off")
+plt.show()
+
+'''
+To create an average pooling layer, just use AvgPool2D instead of MaxPool2D. As you
+might expect, it works exactly like a max pooling layer, except it computes the mean
+rather than the max. Average pooling layers used to be very popular, but people
+444 | Chapter 14: Deep Computer Vision Using Convolutional Neural Networks
+mostly use max pooling layers now, as they generally perform better. This may seem
+surprising, since computing the mean generally loses less information than computing
+the max. But on the other hand, max pooling preserves only the strongest feature,
+getting rid of all the meaningless ones, so the next layers get a cleaner signal to work
+with. Moreover, max pooling offers stronger translation invariance than average
+pooling.
+
+One last type of pooling layer that you will often see in modern architectures is the
+global average pooling layer. It works very differently: all it does is compute the mean
+of each entire feature map (it’s like an average pooling layer using a pooling kernel
+with the same spatial dimensions as the inputs). This means that it just outputs a single
+number per feature map and per instance. Although this is of course extremely
+destructive (most of the information in the feature map is lost), it can be useful as the
+output layer, as we will see later in this chapter.
+'''
+
+global_avg_pool = tf.keras.layers.GlobalAvgPool2D()
+global_avg_pool(cropped_images)
+
+
+# It is actually equivalent to this simple Lamba layer, 
+# which computes the mean over the spatial dimensions (height and width)
+output_global_avg2 = tf.keras.layers.Lambda(lambda X: tf.reduce_mean(X, axis=[1, 2]))
+output_global_avg2(cropped_images)
 
 
 
