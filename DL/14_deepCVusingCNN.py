@@ -44,14 +44,23 @@ automatically learn the most useful filters for its task, and the layers above w
 learn to combine them into more complex patterns.
 '''
 
-import numpy as np
 from sklearn.datasets import load_sample_image
 import tensorflow as tf
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import tensorflow_datasets as tfds
+#import tensorflow_datasets as tfds
 import numpy as np
 
+
+def plotTrainingResult(history):
+    plt.plot(history.epoch, history.history['loss'], label="train loss")
+    plt.plot(history.epoch, history.history['accuracy'], label="train accuracy")
+    plt.plot(history.epoch, history.history['val_loss'], label="validation loss")
+    plt.plot(history.epoch, history.history['val_accuracy'], label="validation accuracy")
+    plt.title('training + validation loss and accuracy')
+    plt.legend()
+    plt.show()
+    
 def plot_image(image):
     plt.imshow(image, cmap="gray", interpolation="nearest")
     plt.axis("off")
@@ -200,7 +209,8 @@ creates a max pooling layer using a 2 × 2 kernel. The strides default to the ke
 so this layer will use a stride of 2 (both horizontally and vertically). By default, it uses
 VALID padding (i.e., no padding at all):
 '''
-max_pool = tf.keras.layers.MaxPool2D(pool_size=2)
+max_pool = tf.keras.layers.MaxPool2D(pool_size=2) #The strides default to the kernel size,
+                                                  #so this layer will use a stride of 2
 
 cropped_images = np.array([crop(image) for image in images], dtype=np.float32)
 output = max_pool(cropped_images)
@@ -222,7 +232,6 @@ plt.show()
 To create an average pooling layer, just use AvgPool2D instead of MaxPool2D. As you
 might expect, it works exactly like a max pooling layer, except it computes the mean
 rather than the max. Average pooling layers used to be very popular, but people
-444 | Chapter 14: Deep Computer Vision Using Convolutional Neural Networks
 mostly use max pooling layers now, as they generally perform better. This may seem
 surprising, since computing the mean generally loses less information than computing
 the max. But on the other hand, max pooling preserves only the strongest feature,
@@ -248,8 +257,152 @@ global_avg_pool(cropped_images)
 output_global_avg2 = tf.keras.layers.Lambda(lambda X: tf.reduce_mean(X, axis=[1, 2]))
 output_global_avg2(cropped_images)
 
+'''
+CNN Architectures
+-----------------
+A common mistake is to use convolution kernels that are too large.
+For example, instead of using a convolutional layer with a 5 × 5
+kernel, it is generally preferable to stack two layers with 3 × 3 kernels:
+it will use less parameters and require less computations, and
+it will usually perform better. One exception to this recommendation
+is for the first convolutional layer: it can typically have a large
+kernel (e.g., 5 × 5), usually with stride of 2 or more: this will reduce
+the spatial dimension of the image without losing too much information,
+and since the input image only has 3 channels in general, it
+will not be too costly.
+
+Typically, the number of filters grows as we climb up the CNN towards the output
+layer (in the example above it is initially 64, then 128, then 256): 
+it makes sense for it to grow, since the number of low level features is 
+often fairly low (e.g., small circles, horizontal lines, etc.), but there are many 
+different ways to combine them into higher level features. 
+It is a common practice to double the number of filters after each pooling
+layer: since a pooling layer divides each spatial dimension by a factor of 2, we
+can afford doubling the number of feature maps in the next layer, without fear of
+exploding the number of parameters, memory usage, or computational load.
+'''
+
+# Example of CNN to tacckle fashion Mnist
+# load and preprocess data
+(X_train_full, y_train_full), (X_test, y_test) = tf.keras.datasets.fashion_mnist.load_data()
+X_train, X_valid = X_train_full[:-5000], X_train_full[-5000:]
+y_train, y_valid = y_train_full[:-5000], y_train_full[-5000:]
+
+X_mean = X_train.mean(axis=0, keepdims=True)
+X_std = X_train.std(axis=0, keepdims=True) + 1e-7
+X_train = (X_train - X_mean) / X_std
+X_valid = (X_valid - X_mean) / X_std
+X_test = (X_test - X_mean) / X_std
+
+X_train = X_train[..., np.newaxis]
+X_valid = X_valid[..., np.newaxis]
+X_test = X_test[..., np.newaxis]
+
+#build CNN
+from functools import partial
+
+#partial() defines a thin wrapper around the Conv2D class, called DefaultConv2D: 
+#it simply avoids having to repeat the same hyperparameter values over and over again.
+DefaultConv2D = partial(tf.keras.layers.Conv2D,
+                        kernel_size=3, activation='relu', padding="SAME")
+
+model = tf.keras.models.Sequential([
+    DefaultConv2D(filters=64, kernel_size=7, input_shape=[28, 28, 1]),
+    tf.keras.layers.MaxPooling2D(pool_size=2),
+    DefaultConv2D(filters=128),
+    DefaultConv2D(filters=128),
+    tf.keras.layers.MaxPooling2D(pool_size=2),
+    DefaultConv2D(filters=256),
+    DefaultConv2D(filters=256),
+    tf.keras.layers.MaxPooling2D(pool_size=2),
+    tf.keras.layers.Flatten(),
+    tf.keras.layers.Dense(units=128, activation='relu'),
+    tf.keras.layers.Dropout(0.5),
+    tf.keras.layers.Dense(units=64, activation='relu'),
+    tf.keras.layers.Dropout(0.5),
+    tf.keras.layers.Dense(units=10, activation='softmax'),
+])
+
+# compile and train the model
+model.compile(loss="sparse_categorical_crossentropy", optimizer="nadam", metrics=["accuracy"])
+history = model.fit(X_train, y_train, epochs=10, validation_data=(X_valid, y_valid))
+score = model.evaluate(X_test, y_test)
+X_new = X_test[:10] # pretend we have new images
+y_pred = model.predict(X_new)
+
+plotTrainingResult(history)
 
 
+'''
+Implementing a ResNet-34 CNN Using Keras
+----------------------------------------
+Most CNN architectures are fairly straightforward to implement.
+(although generally you would load a pretrained network instead, as we will see). 
+To illustrate the process, let’s implement a ResNet-34 from scratch using Keras. 
+First, we create a ResidualUnit layer, then webuild the resnet using a sequential model.
+It is quite amazing that in less than 40 lines of code, we can build the model that won
+the ILSVRC 2015 challenge! It demonstrates both the elegance of the ResNet model,
+and the expressiveness of the Keras API. Implementing the other CNN architectures
+is not much harder. However, Keras comes with several of these architectures built in,
+so why not use them instead?
+'''
+
+DefaultConv2D = partial(tf.keras.layers.Conv2D, kernel_size=3, strides=1,
+                        padding="SAME", use_bias=False)
+
+class ResidualUnit(tf.keras.layers.Layer):
+    def __init__(self, filters, strides=1, activation="relu", **kwargs):
+        super().__init__(**kwargs)
+        self.activation = tf.keras.activations.get(activation)
+        self.main_layers = [
+            DefaultConv2D(filters, strides=strides),
+            tf.keras.layers.BatchNormalization(),
+            self.activation,
+            DefaultConv2D(filters),
+            tf.keras.layers.BatchNormalization()]
+        self.skip_layers = []
+        if strides > 1: #skip layers are only needed if the stride is greater than 1
+            self.skip_layers = [
+                DefaultConv2D(filters, kernel_size=1, strides=strides),
+                tf.keras.layers.BatchNormalization()]
+
+    def call(self, inputs):
+        Z = inputs
+        for layer in self.main_layers:  #the input goes through the main layers
+            Z = layer(Z)
+        skip_Z = inputs                 #the input also goes through the skip connection (if any)
+        for layer in self.skip_layers:
+            skip_Z = layer(skip_Z)
+        return self.activation(Z + skip_Z)  #we add both output and apply the activation fct
+
+# Now, we can build the resnet using a sequential model
+# we can treat each residual unit as a single layer
+model = tf.keras.models.Sequential()
+model.add(DefaultConv2D(64, kernel_size=7, strides=2, input_shape=[224, 224, 3]))
+model.add(tf.keras.layers.BatchNormalization())
+model.add(tf.keras.layers.Activation("relu"))
+model.add(tf.keras.layers.MaxPool2D(pool_size=3, strides=2, padding="SAME"))
+prev_filters = 64
+# the first 3 Residual unit (RU) has 64 filterd
+# then the next 4 RU has 128 filters, and so on
+for filters in [64] * 3 + [128] * 4 + [256] * 6 + [512] * 3:
+    # we set the stride to 1 if the number of filters is the same as in the previous RU
+    strides = 1 if filters == prev_filters else 2
+    model.add(ResidualUnit(filters, strides=strides))   #add the residual unit
+    prev_filters = filters                              #update the previous filterss
+model.add(tf.keras.layers.GlobalAvgPool2D())
+model.add(tf.keras.layers.Flatten())
+model.add(tf.keras.layers.Dense(10, activation="softmax"))
+
+
+# compile and train the model
+model.compile(loss="sparse_categorical_crossentropy", optimizer="nadam", metrics=["accuracy"])
+history = model.fit(X_train, y_train, epochs=10, validation_data=(X_valid, y_valid))
+score = model.evaluate(X_test, y_test)
+X_new = X_test[:10] # pretend we have new images
+y_pred = model.predict(X_new)
+
+plotTrainingResult(history)
 
 '''
 Pretrained Models for Transfer Learning
@@ -264,7 +417,7 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 import matplotlib.pyplot as plt
 
-from functools import partial
+
 
 tf_flowers_raw, info = tfds.load("tf_flowers", as_supervised=True, with_info=True)
 
