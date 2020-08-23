@@ -5,7 +5,6 @@ Created on Tue Aug 11 01:02:18 2020
 @author: BT
 """
 
-
 '''
 Implementing a ResNet-34 CNN Using Keras
 ----------------------------------------
@@ -13,6 +12,7 @@ Most CNN architectures are fairly straightforward to implement.
 (although generally you would load a pretrained network instead, as we will see). 
 To illustrate the process, let’s implement a ResNet-34 from scratch using Keras. 
 First, we create a ResidualUnit layer, then webuild the resnet using a sequential model.
+
 It is quite amazing that in less than 40 lines of code, we can build the model that won
 the ILSVRC 2015 challenge! It demonstrates both the elegance of the ResNet model,
 and the expressiveness of the Keras API. Implementing the other CNN architectures
