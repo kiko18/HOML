@@ -5,6 +5,16 @@ Created on Wed Sep  2 15:53:17 2020
 @author: BT
 """
 
+
+'''
+linux
+-----
+conda install -c conda-forge gym 
+pip install --user tf-agents[reverb]
+pip install gym[atari]
+'''
+
+
 '''
 In Reinforcement Learning, a software agent makes observations and takes actions
 within an environment, and in return it receives rewards. Its objective is to learn to act
