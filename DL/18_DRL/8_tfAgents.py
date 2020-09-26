@@ -211,20 +211,8 @@ time_step = env.step(np.array(1)) # FIRE
 for _ in range(4):
     time_step = env.step(np.array(3)) # LEFT
 
-def plot_observation(obs):
-    # Since there are only 3 color channels, you cannot display 4 frames
-    # with one primary color per frame. So this code computes the delta between
-    # the current frame and the mean of the other frames, and it adds this delta
-    # to the red and blue channels to get a pink color for the current frame.
-    obs = obs.astype(np.float32)
-    img = obs[..., :3]
-    current_frame_delta = np.maximum(obs[..., 3] - obs[..., :3].mean(axis=-1), 0.)
-    img[..., 0] += current_frame_delta
-    img[..., 2] += current_frame_delta
-    img = np.clip(img / 150, 0, 1)
-    plt.imshow(img)
-    plt.axis("off")
-    
+
+from utils import plot_observation    
 # On the plotted figure, you can see that the resolution is much lower, but sufficient 
 # to play the game. Moreover, frames are stacked along the channels dimension, so red 
 # represents the frame from three steps ago, green is two steps ago, blue is the previous 

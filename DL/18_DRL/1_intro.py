@@ -7,12 +7,28 @@ Created on Wed Sep  2 15:53:17 2020
 
 
 '''
+windows
+-------
+conda install -c conda-forge gym 
+pip install --upgrade tensorflow  (if required)
+pip install --user tf-agents
+pip install --user gym[atari]
+
+
 linux
 -----
 conda install -c conda-forge gym 
 pip install --user tf-agents[reverb]
-pip install gym[atari]
+pip install gym[atari] or  conda install -c conda-forge gym-atari 
+
+mac-os
+------
+conda install -c conda-forge gym 
+pip install --user tf-agents
+conda install -c conda-forge gym-atari 
 '''
+
+
 
 
 '''

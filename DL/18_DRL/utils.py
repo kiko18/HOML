@@ -41,3 +41,16 @@ def render_policy_net(model, n_max_steps=200, seed=42):
     env.close()
     return frames
 
+def plot_observation(obs):
+    # Since there are only 3 color channels, you cannot display 4 frames
+    # with one primary color per frame. So this code computes the delta between
+    # the current frame and the mean of the other frames, and it adds this delta
+    # to the red and blue channels to get a pink color for the current frame.
+    obs = obs.astype(np.float32)
+    img = obs[..., :3]
+    current_frame_delta = np.maximum(obs[..., 3] - obs[..., :3].mean(axis=-1), 0.)
+    img[..., 0] += current_frame_delta
+    img[..., 2] += current_frame_delta
+    img = np.clip(img / 150, 0, 1)
+    plt.imshow(img)
+    plt.axis("off")
