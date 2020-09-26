@@ -8,7 +8,7 @@ Created on Mon Sep 21 11:37:23 2020
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
-
+import utils
 '''
 tf_agent environment, what next?
 -------------------------------
@@ -375,12 +375,11 @@ from tf_agents.trajectories.trajectory import to_transition
 time_steps, action_steps, next_time_steps = to_transition(trajectories)
 print(time_steps.observation.shape)
 
-from utils import plot_observation
 plt.figure(figsize=(10, 6.8))
 for row in range(2):
     for col in range(3):
         plt.subplot(2, 3, row * 3 + col + 1)
-        plot_observation(trajectories.observation[row, col].numpy())
+        utils.plot_observation(trajectories.observation[row, col].numpy())
 plt.subplots_adjust(left=0, right=1, bottom=0, top=1, hspace=0, wspace=0.02)
 plt.show()
 
@@ -454,4 +453,51 @@ def train_agent(n_iterations):
 #but it is not so good at games with long-running storylines.
 # For a comparison of this algorithm’s performance on various Atari games, see figure 3 
 # in DeepMind’s 2015 paper.
-train_agent(n_iterations=10000)  #        
+train_agent(n_iterations=10000)  #    
+
+
+frames = []
+def save_frames(trajectory):
+    global frames
+    frames.append(tf_env.pyenv.envs[0].render(mode="rgb_array"))
+
+prev_lives = tf_env.pyenv.envs[0].ale.lives()
+def reset_and_fire_on_life_lost(trajectory):
+    global prev_lives
+    lives = tf_env.pyenv.envs[0].ale.lives()
+    if prev_lives != lives:
+        tf_env.reset()
+        tf_env.pyenv.envs[0].step(1)
+        prev_lives = lives
+
+watch_driver = DynamicStepDriver(
+    tf_env,
+    agent.policy,
+    observers=[save_frames, reset_and_fire_on_life_lost, ShowProgress(1000)],
+    num_steps=1000)
+final_time_step, final_policy_state = watch_driver.run()
+
+utils.plot_animation(frames)    
+
+# If you want to save an animated GIF to show off your agent to your friends, 
+#here's one way to do it:
+
+import PIL
+import os
+image_path = os.path.join("images", "rl", "breakout.gif")
+frame_images = [PIL.Image.fromarray(frame) for frame in frames[:150]]
+frame_images[0].save(image_path, format='GIF',
+                     append_images=frame_images[1:],
+                     save_all=True,
+                     duration=30,
+                     loop=0)
+
+'''
+We covered many topics in this chapter: Policy Gradients, Markov chains, Markov
+decision processes, Q-Learning, Approximate Q-Learning, and Deep Q-Learning and
+its main variants (fixed Q-Value targets, Double DQN, Dueling DQN, and prioritized
+experience replay). We discussed how to use TF-Agents to train agents at scale, and
+finally we took a quick look at a few other popular algorithms. Reinforcement Learning
+is a huge and exciting field, with new ideas and algorithms popping out every day,
+so I hope this chapter sparked your curiosity: there is a whole world to explore!
+'''
