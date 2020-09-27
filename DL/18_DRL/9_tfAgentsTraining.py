@@ -467,7 +467,7 @@ def reset_and_fire_on_life_lost(trajectory):
     lives = tf_env.pyenv.envs[0].ale.lives()
     if prev_lives != lives:
         tf_env.reset()
-        tf_env.pyenv.envs[0].step(1)
+        tf_env.pyenv.envs[0].step(np.array(1))
         prev_lives = lives
 
 watch_driver = DynamicStepDriver(
@@ -484,7 +484,7 @@ utils.plot_animation(frames)
 
 import PIL
 import os
-image_path = os.path.join("images", "rl", "breakout.gif")
+image_path = os.path.join("breakout.gif")#"images", "rl", "breakout.gif")
 frame_images = [PIL.Image.fromarray(frame) for frame in frames[:150]]
 frame_images[0].save(image_path, format='GIF',
                      append_images=frame_images[1:],
