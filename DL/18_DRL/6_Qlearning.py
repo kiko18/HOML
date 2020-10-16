@@ -67,9 +67,9 @@ and nothing more. The agent must then experience each state and each transition 
 once to know the rewards, and it must experience them multiple times if it is to have a 
 reasonable estimate of the transition probabilities.
 
-To do so, the agent uses an exploration policy—for example, a purely random policy—to 
-explore the MDP, and as it progresses, the Q-Learning algorithm updates the estimates of 
-the Q-values based on the transitions and rewards that are actually observed.
+To do so, the agent uses an exploration policy —for example, a purely random policy—
+to explore the MDP, and as it progresses, the Q-Learning algorithm updates the estimates 
+of the Q-values based on the transitions and rewards that are actually observed.
 
 For each state-action pair (s, a), the algorithm keeps track of a running average of the
 rewards r the agent gets upon leaving the state s with action a, plus the sum of 
@@ -117,9 +117,8 @@ for iteration in range(10000):
     state = next_state
 
 history2 = np.array(history2) 
-
 print('\n Q-learning = \n', Q_values)
-print(np.argmax(Q_values, axis=1)) # optimal action for each state)
+print('\n optimal action for each state=', np.argmax(Q_values, axis=1)) # optimal action for each state)
       
 Q_value_iteration = history1[-1]
 print('\n Q value iteration = \n', Q_value_iteration)

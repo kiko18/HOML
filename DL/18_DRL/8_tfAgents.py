@@ -76,7 +76,7 @@ print(env.action_spec())
 print(env.time_step_spec())
 
 # To know what each action corresponds to
-print(env.gym.get_action_meanings())
+print(env.unwrapped.get_action_meanings()) #env.gym.get_action_meanings())
 
 #To render an environment, you can call env.render(mode="human"), and if you want 
 #to get back the image in the form of a NumPy array, just call env.render(mode="rgb_array") 

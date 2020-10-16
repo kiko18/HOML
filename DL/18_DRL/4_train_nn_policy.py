@@ -9,11 +9,14 @@ import numpy as np
 import gym
 import utils
 
+seed = 42
 tf.keras.backend.clear_session()
-tf.random.set_seed(42)
-np.random.seed(42)
+tf.random.set_seed(seed)
+np.random.seed(seed)
 
 '''
+How to train the NN?
+
 Evaluating Actions: The Credit Assignment Problem
 -------------------------------------------------
 A) problem: credit assignment
@@ -40,7 +43,7 @@ If the discount factor is close to 0, then future rewards won’t count for much
 to immediate rewards. Conversely, if the discount factor is close to 1, then rewards far 
 into the future will count almost as much as immediate rewards. Typical discount factors 
 vary from 0.9 to 0.99. With a discount factor of 0.95, rewards 13 steps into the future 
-count roughly for half as much as immediate rewards (since 0.9513 ≈ 0.5), while with a 
+count roughly for half as much as immediate rewards (since 0.95^13 ≈ 0.5), while with a 
 discount factor of 0.99, rewards 69 steps into the future count for half as much as 
 immediate rewards. In the CartPole environment, actions have fairly short-term effects, 
 so choosing a discount factor of 0.95 seems reasonable.
@@ -53,9 +56,10 @@ may sometimes star in a terrible movie).
 
 D) solution: action advantage = run many episode an compare action on average
 ------------------------------
-However, if we play the game enough times,on average good actions will get a higher 
+However, if we play the game enough times, on average good actions will get a higher 
 return than bad ones. We want to estimate how much better or worse an action is, 
 compared to the other possible actions, on average. This is called the action advantage. 
+
 For this, we must run many episodes and normalize all the action returns (by subtracting 
 the mean and dividing by the standard deviation). After that, we can reasonably assume that
 actions with a negative advantage were bad while actions with a positive advantage were good. 
@@ -99,9 +103,9 @@ in 1992 by Ronald Williams. Here is one common variant:
 '''
 To summarize:
 
-To train the neural network we will need to define the target probabilities y. 
-If an action is good we should increase its probability, and conversely if it is 
-bad we should reduce it. But how do we know whether an action is good or bad? 
+To train the neural network we will need to define the target probabilities y of each action. 
+If an action is good we should increase its probability, and conversely if it is bad we should 
+reduce it. But how do we know whether an action is good or bad? 
 The problem is that most actions have delayed effects, so when you win or lose 
 points in an episode, it is not clear which actions contributed to this result. 
 was it just the last action? Or the last 10? Or just one action 50 steps earlier? 
@@ -118,11 +122,11 @@ so we can compute the loss and its gradients (we will just save these gradients 
 and modify them later depending on how good or bad the action turned out to be)
 '''
 # If left proba is high -> y_target will be 1. How?
-#If left_proba is high, then action will most likely be False (since a random number 
-#uniformally sampled between 0 and 1 will probably not be greater than left_proba). 
-#And False means 0 when you cast it to a number, so y_target would be equal to 1 - 0 = 1. 
-#In other words, we set the target to 1, meaning we pretend that the probability of going left 
-#should have been 100% (so we took the right action).
+# If left_proba is high, then action will most likely be False (since a random number 
+# uniformally sampled between 0 and 1 will probably not be greater than left_proba). 
+# And False means 0 when you cast it to a number, so y_target would be equal to 1 - 0 = 1. 
+# In other words, we set the target to 1, meaning we pretend that the probability 
+# of going left should have been 100% (so we took the right action).
 def play_one_step(env, obs, model, loss_fn):
     with tf.GradientTape() as tape:
         # compute proba of going left
@@ -135,7 +139,7 @@ def play_one_step(env, obs, model, loss_fn):
         # target proba of going left = 1-action
         # if action is 0 -> target proba of going left will be 1
         y_target = tf.constant([[1.]]) - tf.cast(action, tf.float32)
-        # compute los
+        # compute loss
         loss = tf.reduce_mean(loss_fn(y_target, left_proba))
     # compute gradient of the loss w.r.t the model's trainable variables
     # Again, this gradient will be tweaked later, before we apply them, 
@@ -230,8 +234,8 @@ optimizer = tf.keras.optimizers.Adam(lr=0.01)
 loss_fn = tf.keras.losses.binary_crossentropy
 
 tf.keras.backend.clear_session()
-np.random.seed(42)
-tf.random.set_seed(42)
+np.random.seed(seed)
+tf.random.set_seed(seed)
 
 # simple sequential model to define the policy network
 model = tf.keras.models.Sequential([
@@ -242,32 +246,43 @@ model = tf.keras.models.Sequential([
 ])
 
 env = gym.make("CartPole-v1")
-env.seed(42);
+#env = gym.make('BreakoutNoFrameskip-v4')
+env.seed(seed);
 
 # Build and run the training loop
 for iteration in range(n_iterations):
-    
+    # 1-plays the game 10 times. returns all the rewards and gradients for every episode and step
     all_rewards, all_grads = play_multiple_episodes(
         env, n_episodes_per_update, n_max_steps, model, loss_fn)
     
     total_rewards = sum(map(sum, all_rewards))                     
     print("\rIteration: {}, mean rewards: {:.1f}".format(          
         iteration, total_rewards / n_episodes_per_update), end="") 
+    
+    # 2-compute each action’s normalized advantage (which in the code we call the final_reward). 
+    # This provides a measure of how good or bad each action actually was, in hindsight.
     all_final_rewards = discount_and_normalize_rewards(all_rewards,discount_rate)
     all_mean_grads = []
+    
+    # 3-we go through each trainable variable, and for each of them we compute the weighted mean 
+    # of the gradients for that variable over all episodes and all steps, weighted by the 
+    #final_reward.
     for var_index in range(len(model.trainable_variables)):
         for episode_index, final_rewards in enumerate(all_final_rewards):   #episode reward
             for step, final_reward in enumerate(final_rewards):             #steps reward
                 mean_grads = tf.reduce_mean([final_reward * 
                                              all_grads[episode_index][step][var_index]], axis=0)                
         all_mean_grads.append(mean_grads)
+        
+    # 4-Finally, we apply these mean gradients using the optimizer: the model’s trainable
+    # variables will be tweaked, and hopefully the policy will be a bit better.    
     optimizer.apply_gradients(zip(all_mean_grads, model.trainable_variables))
-
 env.close()
 
 
 frames = utils.render_policy_net(model)
-utils.plot_animation(frames)
+utils.saveFrames(frames, 'trained_nn_policy')
+#utils.plot_animation(frames)
 
 '''
 And we’re done! This code will train the neural network policy, 

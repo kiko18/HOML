@@ -25,7 +25,7 @@ There are more state than the number of atom in our planet, so there’s absolut
 no way of keeping track of an estimate for every single Q-Value.
 
 Since we can not keep track of an estimate for every single Q-Value, the solution is to
-approximate the Q value. We can the approcimated value Q_approximate(s,a). 
+approximate the Q value. We call the approximated value Q_approximate(s,a). 
 To compute Q_approximate(s,a), we need a function Q_θ(s, a) that approximates the Q-Value 
 of any state-action pair (s, a) using a manageable number of parameters (given by the 
 parameter vector θ). This is called Approximate Q-Learning. 
@@ -223,7 +223,9 @@ for i_episode in range(10):
     time.sleep(2)
     
     for t in range(200):
-        env.render()
+        #env.render()
+        img = env.render(mode="rgb_array")
+        frames.append(img)
         
         action = epsilon_greedy_policy(state)
         obs, reward, done, info = env.step(action)
@@ -245,6 +247,8 @@ env.close()
 
 print(np.mean(totals), round(np.std(totals),2), np.min(totals), np.max(totals)) 
 
+#utils.plot_animation(frames)
+utils.saveFrames(frames,title='deepQlearning')
 '''
 for step in range(200):
     action = epsilon_greedy_policy(state)

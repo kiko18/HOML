@@ -7,11 +7,13 @@ Created on Wed Sep  2 15:53:17 2020
 
 
 '''
+pip install --upgrade tensorflow  (if required)
+
+
 windows
 -------
 conda install -c conda-forge gym 
-pip install --upgrade tensorflow  (if required)
-pip install --user tf-agents
+pip install --user tf-agents   or pip install tf-agents==0.3.0
 pip install --user gym[atari]
 
 
@@ -33,11 +35,8 @@ conda install -c conda-forge gym-atari
 
 '''
 In Reinforcement Learning, a software agent makes observations and takes actions
-within an environment, and in return it receives rewards. Its objective is to learn to act
-in a way that will maximize its expected rewards over time. You can think of positive 
-rewards as pleasure, and negative rewards as pain. In short, the agent
-acts in the environment and learns by trial and error to maximize its pleasure and
-minimize its pain.
+within an environment, and in return it receives rewards. Its objective is to learn
+by trial and error to act in a way that will maximize its expected rewards over time. 
 
 There are many examples of tasks to which Reinforcement Learning is well suited, 
 such as self-driving cars, recommender systems, placing ads on a web page, or 
@@ -83,47 +82,96 @@ called policy gradients (PG), in more detail later in this chapter.
 
 - Going back to the vacuum cleaner robot, an approach could be to slightly increase p and 
 evaluate whether doing so increases the amount of dust picked up by the robot in 30 minutes; 
-if it does, then increase p some more, or else reduce p. We will implement a popular PG 
-algorithm using TensorFlow, but before we do, we need to create an environment for the agent
-to live in—so it’s time to introduce OpenAI Gym.
+if it does, then increase p some more, or else reduce p. 
+
+We will implement a popular PG algorithm using TensorFlow, but before we do, we need to create 
+an environment for the agent to live in—so it’s time to introduce OpenAI Gym.
 '''
-
 import gym
-import time
+#print(gym.envs.registry.all()) #list of all available env
+import matplotlib.pyplot as plt
 import numpy as np
-#env = gym.make('CarRacing-v0')
-env = gym.make('CartPole-v1')
 
-#for each episode we save the maximal reward. 
-#This also tel us for how many step we where are to stay alive
-totals = []     
+Headless_server = False
 
-for i_episode in range(10):
-    obs = env.reset()   #initial observation
-    episode_rewards = 0
+def plot_environment(env, figsize=(5,4)):
+    plt.figure(figsize=figsize)
     
-    print("episode", i_episode)
-    time.sleep(2)
-    
-    for t in range(200):
-        env.render()
-        
-        action = env.action_space.sample()
-        obs, reward, done, info = env.step(action)
-        
-        print('---'*10)
-        print('obs.shape=', obs.shape)
-        print('reward', reward)
-        print('done', done)
-        print('info', info)
-        episode_rewards += reward
-        
-        if done:
-            print("Episode finished after {} timesteps".format(t+1))
-            break
-        
-    totals.append(episode_rewards)
-    
+    if (Headless_server):
+        try:
+            #apt install -y xvfb 
+            # #conda install -c conda-forge pyvirtualdisplay
+            import pyvirtualdisplay
+            display = pyvirtualdisplay.Display(visible=0, size=(1400, 900)).start()  
+        except ImportError:
+            pass
+
+    img = env.render(mode="rgb_array")
+    plt.imshow(img)
+    plt.axis("off")
+    return img
+
+env = gym.make('CartPole-v1')   #create a CartPole (chariot-baton) environment
+env.seed(42)
+obs = env.reset()   #initialize the environment
+# Initializing the environment return an observation.
+# Observations vary depending on the environment. In this case it is a 1D NumPy 
+# array composed of 4 floats: they represent the cart's horizontal position (0.0 = center), 
+# its velocity (positive means right), the angle of the pole (0.0 = vertical), 
+# and its angular velocity (positive means clockwise). 
+# In atary games, observation are usually 3D array representing images.
+print(obs)
+
+# display the environment
+# you can pick the rendering mode (the rendering options depend on the environment).
+# for example, mode="rgb_array" will return the rendered image as a NumPy array.
+# we can then encapsule the rendering into a function plot_environment.
+#env.render(mode="rgb_array")
+plot_environment(env)
+plt.show()
+
+# how to interact with an environment? 
+# Your agent select an action from an "action space" (the set of possible actions). 
+# you can see what this environment's action space looks like with env.action_space.
+# This will return "Discrete(2)", which means that the possible actions are integers 
+# 0 and 1, representing accelerating left (0) or right (1). 
+# Other environments may have additional discrete actions, or other kinds of actions 
+#(e.g., continuous). 
+env.action_space #see action space
+
+# Since the pole is leaning toward the right (obs[2] > 0), let’s accelerate the cart 
+# toward the right.
+action = 1  # accelerate right
+obs, reward, done, info = env.step(action)
+print(obs)
+print(reward)
+print(done)
+
+# The step() method executes the given action and returns four values:
+# - obs
+# - reward:
+#   In this environment, you get a reward of 1.0 at every step, no matter what you do,
+#   so the goal is to keep the episode running as long as possible.
+
+# - done:
+#   This value will be True when the episode is over. This will happen when the pole
+#   tilts too much, or goes off the screen, or after 200 steps (in this last case, you have
+#   won). After that, the environment must be reset before it can be used again.
+
+# - info:
+#   This environment-specific dictionary can provide some extra information that
+#   you may find useful for debugging or for training. For example, in some games it
+#   may indicate how many lives the agent has.
+
+# Once you have finished using an environment, you should call itsclose() method 
+# to free resources.
 env.close()
 
-print(np.mean(totals), np.std(totals), np.min(totals), np.max(totals)) 
+'''
+Now how can we make the poll remain upright? 
+We will need to define a policy for that. This is the strategy that the agent will 
+use to select an action at each step. It can use all the past actions and observations 
+to decide what to do.
+Let's hard code a simple strategy: if the pole is tilting to the left, 
+then push the cart to the left, and vice versa.
+'''

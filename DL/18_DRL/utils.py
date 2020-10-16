@@ -10,6 +10,19 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import gym
 
+import PIL
+import os
+
+def saveFrames(frames,title='none'):
+    title = title + '.gif'
+    image_path = os.path.join(title)#"images", "rl", "breakout.gif")
+    frame_images = [PIL.Image.fromarray(frame) for frame in frames]
+    frame_images[0].save(image_path, format='GIF',
+                         append_images=frame_images[1:],
+                         save_all=True,
+                         #duration=30,
+                         loop=0)
+
 def update_scene(num, frames, patch):
     patch.set_data(frames[num])
     return patch,

@@ -66,37 +66,46 @@ import time
 
 env = gym.make('CartPole-v1')
 seed=42
+n_max_episodes = 10
 n_max_steps = 200
 env.seed(seed)
 np.random.seed(seed)
     
+frames = []
 totals = []     
+best_episode_frames = []  #save frames from the best episode and render them later on
+best_episode_reward = 0
 
-for i_episode in range(10):
+for episode in range(n_max_episodes):
     obs = env.reset()   #initial observation
     episode_rewards = 0
-    
-    print("episode", i_episode)
-    time.sleep(2)
+    print("episode", episode)
+    #time.sleep(2)
     
     for t in range(n_max_steps):
-        env.render()
+        #env.render()
+        frames.append(env.render(mode="rgb_array"))
         
-        action = env.action_space.sample()
         left_proba = model.predict(obs.reshape(1, -1))
         action = int(np.random.rand() > left_proba)
         obs, reward, done, info = env.step(action)
         
-        print('---'*10)
-        print('obs.shape=', obs.shape)
-        print('reward', reward)
-        print('done', done)
-        print('info', info)
+# =============================================================================
+#         print('---'*10)
+#         print('obs.shape=', obs.shape)
+#         print('reward', reward)
+#         print('done', done)
+#         print('info', info)
+# =============================================================================
         episode_rewards += reward
         
         if done:
             print("Episode finished after {} timesteps".format(t+1))
             break
+        
+        if episode_rewards > best_episode_reward:    #totals[-1] = last_episode_reward
+            best_episode_frames = frames
+            best_episode_reward = episode_rewards
         
     totals.append(episode_rewards)
     
@@ -104,5 +113,17 @@ env.close()
 
 print(np.mean(totals), round(np.std(totals),2), np.min(totals), np.max(totals)) 
 
-#OK, we now have a neural network policy that will take observations and output
+'''
+OK, we now have a neural network policy that will take observations and output
 #action probabilities. But how do we train it?
+'''
+
+import PIL
+import os
+image_path = os.path.join("basic_policy.gif")#"images", "rl", "breakout.gif")
+frame_images = [PIL.Image.fromarray(frame) for frame in frames]
+frame_images[0].save(image_path, format='GIF',
+                     append_images=frame_images[1:],
+                     save_all=True,
+                     #duration=30,
+                     loop=0)

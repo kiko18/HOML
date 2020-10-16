@@ -15,7 +15,7 @@ the pair (s, s′), not on past states (this is why we say that the system has n
 
 Markov Decision Process:
 -----------------------
-Markov decision processes(first described in the 1950s by Richard Bellman)
+Markov decision processes (first described in the 1950s by Richard Bellman)
 resemble Markov chains but with a twist: at each step, an agent can choose one
 of several possible actions, and the transition probabilities depend on the chosen
 action. Moreover, some state transitions return some reward (positive or negative),
@@ -28,12 +28,12 @@ V*(s) = max Σ T(s, a, s′)·[ R(s, a, s′) + γ·V*(s′)] for all s
 
 It is the sum of all discounted future rewards the agent can expect on average
 after it reaches a state s, assuming it acts optimally.
-stated differently the equation says that if the agent acts optimally, then the optimal 
+stated differently, the equation says that if the agent acts optimally, then the optimal 
 value of the current state is equal to the reward it will get on average after taking one 
 optimal action, plus the expected optimal value of all possible next states that this 
 action can lead to.
 
-Value Iteration algorithm (optimal state value in iteration)
+Value Iteration algorithm (optimal state value (of every possible state) in iteration)
 -------------------------
 V_k+1 (s) <-- max Σ T(s, a, s′) · [R(s, a, s′) + γ·V_k(s′)] for all s
 V_k(s) = estimated value of state s at the kth iteration of the algorithm.
@@ -56,7 +56,7 @@ Q-value (optimal state-action values) of state s with action a at the kth iterat
 
 Now that we know the optimal states values, how do we tel the agent what to do?
 That is how to combine those states with action?
-In oder word, how do we compute the optimal policy? 
+In oder words, how do we compute the optimal policy? 
 
 Bellman found a very similar algorithm to estimate the optimal state-action values, 
 generally called QValues (Quality Values). Once again, you start by initializing all 
@@ -111,6 +111,7 @@ for state, actions in enumerate(possible_actions):
 # every possible action
 gamma = 0.90  # the discount factor
 history1 = [] 
+
 for iteration in range(50):
     Q_prev = Q_values.copy()
     history1.append(Q_prev) 
@@ -128,7 +129,8 @@ history1 = np.array(history1)
 print(Q_values)
 
 # For each state, let’s look at the action that has the highest Q-Value
-print(np.argmax(Q_values, axis=1))
+print("\n For each state, the optimal Qvalue is:", np.argmax(Q_values, axis=1)) 
+
 
 '''
 The optimal policy for this MDP, when using a discount factor of 0.90, is to choose 
