@@ -3,12 +3,13 @@
 """
 Created on Mon Sep 21 11:37:23 2020
 
-@author: btousside
+@author: basil
 """
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 import utils
+
 '''
 tf_agent environment, what next?
 -------------------------------
@@ -49,16 +50,15 @@ dataset. Once we have all the components in place, we will populate the replay b
 with some initial trajectories, then we will run the main training loop. 
 So, let’s start by creating the Deep Q-Network.
 '''
+
 from tf_agents.environments.tf_py_environment import TFPyEnvironment
 
 tf_env = TFPyEnvironment(env)
 
-
 ''' Creating the Deep Q-Network '''
-# The TF-Agents library provides many networks it tf_agents.networks package and 
-# its subpackages We will use the tf_agents.networks.q_network.QNetwork class
+# The TF-Agents library provides many networks in it tf_agents.networks package and 
+# its subpackages. We will use the tf_agents.networks.q_network.QNetwork class
 from tf_agents.networks.q_network import QNetwork
-
 
 preprocessing_layer = tf.keras.layers.Lambda( #The QNetwork takes an observation as input
                         lambda obs: tf.cast(obs, np.float32) / 255.)  
@@ -85,7 +85,8 @@ q_net = QNetwork(
     # All convolutional layers and all dense layers except the output layer use the ReLU 
     # activation function by default (you can change this by setting the activation_fn 
     # argument). The output layer does not use any activation function.
-    fc_layer_params=fc_layer_params)
+    fc_layer_params=fc_layer_params
+    )
 
 # Under the hood, a QNetwork is composed of two parts: an encoding network that 
 # processes the observations, followed by a dense output layer that outputs one 
@@ -106,15 +107,15 @@ q_net = QNetwork(
 # layers into a single output. Next, the encoding network will optionally apply 
 # a list of convolutions sequentially, provided you specify their parameters via 
 # the conv_layer_params argument. 
-# This must be a list composed of 3-tuples (one per convolutional layer) indicating 
-# the The TF-Agents Library number of filters, the kernel size, and the stride. 
+
 # After these convolutional layers, the encoding network will optionally apply a 
 # sequence of dense layers, if you set the fc_layer_params argument: it must be a 
 # list containing the number of neurons for each dense layer. Optionally, you can 
 # also pass a list of dropout rates (one per dense layer) via the dropout_layer_params 
-# argument if you want to apply dropout after each dense layer. The QNetwork takes the 
-# output of this encoding network and passes it to the dense output layer (with one 
-# unit per action).
+# argument if you want to apply dropout after each dense layer. 
+
+# The QNetwork takes the output of this encoding network 
+# and passes it to the dense output layer (with one unit per action).
 
 #The QNetwork class is flexible enough to build many different architectures, 
 # but you can always build your own network class if you need extra flexibility: 
@@ -135,7 +136,7 @@ from tf_agents.agents.dqn.dqn_agent import DqnAgent
 #                                     epsilon=0.00001, centered=True)
 
 train_step = tf.Variable(0) # variable that will count the number of training steps.
-update_period = 4 #run a training step every 4 collect steps
+update_period = 4 #train the model every 4 steps
 
 # we build an optimizer using the same hyperparams as in the 2015 DQN paper
 optimizer = tf.compat.v1.train.RMSPropOptimizer(learning_rate=2.5e-4, decay=0.95, momentum=0.0,
@@ -144,8 +145,9 @@ optimizer = tf.compat.v1.train.RMSPropOptimizer(learning_rate=2.5e-4, decay=0.95
 # we create a PolynomialDecay object that will compute the ε value for the ε-greedy 
 # collect policy, given the current training step (it is normally used to decay the 
 # learning rate, hence the names of the arguments, but it will work just fine to decay 
-# any other value). It will go from 1.0 down to 0.01 (the value used during in the 2015 
-# DQN paper) in 1 million ALE frames, which corresponds to 250,000 steps, since we use 
+# any other value). 
+# It will go from 1.0 down to 0.01 (the value used during in the 2015 DQN paper) 
+# in 1 million ALE frames, which corresponds to 250,000 steps, since we use 
 # frame skipping with a period of 4. 
 # Moreover, we will train the agent every 4 steps (i.e., 16 ALE frames), so ε will 
 # actually decay over 62,500 training steps.
@@ -154,8 +156,8 @@ epsilon_fn = tf.keras.optimizers.schedules.PolynomialDecay(
             decay_steps=250000 // update_period, # <=> 1,000,000 ALE frames
             end_learning_rate=0.01) # final ε
 
-
-# We then build the DQNAgent, passing it the time step specs and action specs, 
+#https://www.tensorflow.org/agents/api_docs/python/tf_agents/agents/DqnAgent
+# We then build the DQNAgent, passing it the timestep specs and action specs, 
 # the QNetwork to train, the optimizer, the number of training steps between target 
 # model updates, the loss function to use, the discount factor (gamma), 
 # the train_step variable and a function that returns the ε value (it must take no 
@@ -209,7 +211,8 @@ replay_buffer = tf_uniform_replay_buffer.TFUniformReplayBuffer(
     # max_length = The maximum size of the replay buffer. We created a large replay buffer 
     # that can store one million trajectories (as was done in the 2015 DQN paper). 
     # This will require a lot of RAM.
-    max_length=1000000)
+    max_length=500000#1000000
+    )
 
 # When we store two consecutive trajectories, they contain two consecutive observations 
 # with four frames each (since we used the FrameStack4 wrapper), and unfortunately three 
@@ -250,8 +253,8 @@ class ShowProgress:
             print("\r{}/{}".format(self.counter, self.total), end="")
 
 ''' Create some training metrics '''
-#TF-Agents implements several RL metrics in the tf_agents.metrics package, 
-#some of tf_agents.metrics are purely in Python and some based on TensorFlow. 
+# TF-Agents implements several RL metrics in the tf_agents.metrics package, 
+# some of tf_agents.metrics are purely in Python and some based on TensorFlow. 
 # Let’s create a few of them in order to count the number of episodes, 
 # the number of steps taken, and most importantly the average return per episode 
 # and the average episode length.
@@ -284,7 +287,7 @@ log_metrics(train_metrics)
 # As we explored in Figure 18-13, a driver is an object that explores an environment
 # using a given policy, collects experiences, and broadcasts them to some observers. 
 # At each step, the following things happen:
-#   -   The driver passes the current time step to the collect policy, which uses this time
+#   -   The driver passes the current timestep to the collect policy, which uses this time
 #       step to choose an action and returns an action step object containing the action.
 #   -   The driver then passes the action to the environment, which returns the next
 #       time step.
@@ -306,7 +309,8 @@ collect_driver = DynamicStepDriver(
     # list of observers (including the replay buffer observer and the training metrics)
     observers=[replay_buffer_observer] + train_metrics, 
     # number of steps to run (collect 4 steps for each training iteration)
-    num_steps=update_period) 
+    num_steps=update_period
+    ) 
 
 # We could now run the driver/pilot by calling its run() method, but it’s best to warm up 
 # the replay buffer with experiences collected using a purely random policy. 
@@ -338,7 +342,7 @@ final_time_step, final_policy_state = init_driver.run() #run the initial driver
 # (each row contains three consecutive steps from an episode)
 
 # Let sample a batch of 2 trajectories (subepisodes), with 3 timesteps each and display them
-tf.random.set_seed(888) # chosen to show an example of trajectory at the end of an episode
+tf.random.set_seed(42) # chosen to show an example of trajectory at the end of an episode
 
 trajectories, buffer_info = replay_buffer.get_next(sample_batch_size=2, num_steps=3)
 

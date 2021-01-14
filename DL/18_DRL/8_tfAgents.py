@@ -76,7 +76,7 @@ print(env.action_spec())
 print(env.time_step_spec())
 
 # To know what each action corresponds to
-print(env.unwrapped.get_action_meanings()) #env.gym.get_action_meanings())
+print(env.gym.get_action_meanings())
 
 #To render an environment, you can call env.render(mode="human"), and if you want 
 #to get back the image in the form of a NumPy array, just call env.render(mode="rgb_array") 
@@ -109,8 +109,10 @@ for name in dir(tf_agents.environments.wrappers):
         print("{:27s} {}".format(name, obj.__doc__.split("\n")[0]))
         
 # Example of Wrapping a TF-Agents environments in a TF-Agents wrapper
+# 
 from tf_agents.environments.wrappers import ActionRepeat
-
+#wrap env in an ActionRepeat wrapper, which repeats each action over n steps, while accumulating the rewards.
+# In many environments, this can speed up training significantly.
 repeating_env = ActionRepeat(env, times=4)
 print(repeating_env)
 repeating_env.unwrapped
@@ -149,10 +151,9 @@ limited_repeating_env = suite_gym.load(
 print(limited_repeating_env)
 limited_repeating_env.unwrapped
 
-
 '''
-For Atari environments, some standard preprocessing steps are applied in most papers that use them, 
-so TF-Agents provides a handy AtariPreprocessing wrapper that implements them. 
+For Atari environments, some standard preprocessing steps are applied in most papers that use them. 
+TF-Agents provides a handy AtariPreprocessing wrapper that implements them. 
 
 Here is the list of preprocessing steps it supports:
     
@@ -196,7 +197,6 @@ max_episode_steps = 27000 # <=> 108k ALE frames since 1 step = 4 frames
 environment_name = "BreakoutNoFrameskip-v4" #variant that does not implement frame skipping 
 
 # Create an Atari Breakout environment, and wrap it to apply the default Atari preprocessing steps
-
 env = suite_atari.load(
     environment_name,
     max_episode_steps=max_episode_steps,
@@ -227,7 +227,8 @@ plt.show()
 
 '''
 Now that we have a nice Breakout environment, with all the appropriate preprocess‐
-ing and TensorFlow support, we must create the DQN agent and the other compo‐
-nents we will need to train it. Let’s look at the architecture of the system we will build.
+ing and TensorFlow support, we must create the DQN agent and the other components 
+we will need to train it. 
+Let’s look at the architecture of the system we will build.
 '''
     
