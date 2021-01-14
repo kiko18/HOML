@@ -51,9 +51,11 @@ import gym
 import time
 import numpy as np
 
+import pyvirtualdisplay
+display = pyvirtualdisplay.Display(visible=True, size=(1400, 900)).start() 
 #env = gym.make('CarRacing-v0')
 env = gym.make('CartPole-v1')
-
+env = gym.wrappers.Monitor(env, './video/',video_callable=lambda episode_id: True,force = True)
 env.seed(42)
 
 def basic_policy(obs):
@@ -65,7 +67,7 @@ def basic_policy(obs):
 totals = []     
 best_episode_frames = []  #save frames from the best episode and render them later on
 best_episode_reward = 0
-n_max_episodes = 500
+n_max_episodes = 100
 n_max_steps = 200
 
 for episode in range(n_max_episodes):
@@ -76,8 +78,8 @@ for episode in range(n_max_episodes):
     
     frames = []
     for step in range(n_max_steps):
-        frames.append(env.render(mode="rgb_array"))
-        #env.render()
+        #frames.append(env.render(mode="rgb_array"))
+        env.render()
         action = basic_policy(obs)  #observe the environment and decide what action to take
         obs, reward, done, info = env.step(action)  #take the action       
         episode_rewards += reward #In this task, rewards are +1 for every incremental timestep
@@ -102,7 +104,7 @@ Even with 500 tries, this policy never managed to keep the pole upright for more
 than 68 consecutive steps. Not great (the task is considered as solved for 200 steps).
 Let’s see if a neural network can come up with a better policy.
 ''' 
-
+'''
 import PIL
 import os
 image_path = os.path.join("basic_policy.gif")#"images", "rl", "breakout.gif")
@@ -112,3 +114,4 @@ frame_images[0].save(image_path, format='GIF',
                      save_all=True,
                      #duration=30,
                      loop=0)
+'''

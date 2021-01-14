@@ -9,12 +9,17 @@ Created on Wed Sep  2 15:53:17 2020
 '''
 pip install --upgrade tensorflow  (if required)
 
+For video
+env = gym.wrappers.Monitor(env, './video/',video_callable=lambda episode_id: True,force = True)
 
 windows
 -------
 conda install -c conda-forge gym 
 pip install --user tf-agents   or pip install tf-agents==0.3.0
+
 pip install --user gym[atari]
+pip uninstall atari-py
+pip install -f https://github.com/Kojoley/atari-py/releases atari_py
 
 
 linux
