@@ -47,6 +47,7 @@ import utils
 tf.random.set_seed(42)
 np.random.seed(42)
 
+# split the dataset into train-test sets
 (X_train_full, y_train_full), (X_test, y_test) = keras.datasets.mnist.load_data()
 X_train_full = X_train_full.astype(np.float32) / 255
 X_test = X_test.astype(np.float32) / 255
@@ -69,6 +70,7 @@ classifier = keras.models.Sequential([
     keras.layers.Dense(20, activation="selu"),
     keras.layers.Dense(10, activation="softmax")
 ])
+
 classifier.compile(loss="sparse_categorical_crossentropy", 
                    optimizer=keras.optimizers.SGD(lr=0.02),
                    metrics=["accuracy"])

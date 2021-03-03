@@ -19,7 +19,7 @@ in the coding layer, over the whole training batch. The batch size must not be t
 or else the mean will not be accurate.
 
 Once we have the mean activation per neuron, we want to penalize the neurons that
-are too active, or not active enough, by adding a sparsity loss to the cost function. 
+are too active, or not active enough, by adding a sparsity loss (MSE or KLD) to the cost function. 
 
 For example, if we measure that a neuron has an average activation of 0.3, but the target
 sparsity is 0.1, it must be penalized to activate less. One approach (to compute the 
@@ -73,14 +73,16 @@ plt.legend(loc="upper left", fontsize=14)
 plt.xlabel("Actual sparsity")
 plt.ylabel("Cost", rotation=0)
 plt.axis([0, 1, 0, 0.95])
-
+plt.show()
 
 # We now have all we need to implement a sparse autoencoder based on the KL divergence.
 # First, let’s create a custom regularizer to apply KL divergence regularization:
-
 K = keras.backend
 kl_divergence = keras.losses.kullback_leibler_divergence
 
+# Regularizers allow you to apply penalties on layer parameters or layer activity during optimization. 
+# These penalties are summed into the loss function that the network optimizes.
+# Regularization penalties are applied on a per-layer basis.
 class KLDivergenceRegularizer(keras.regularizers.Regularizer):
     def __init__(self, weight, target=0.1):
         self.weight = weight
@@ -100,7 +102,11 @@ X_train, X_valid = X_train_full[:-5000], X_train_full[-5000:]
 y_train, y_valid = y_train_full[:-5000], y_train_full[-5000:]
 
 # Now we can build the sparse autoencoder, using the KLDivergenceRegularizer for
-#the coding layer’s activations:
+# the coding layer’s activations.
+# Regularization penalties are applied on a per-layer basis.
+# Regularizer can apply a penalty on the layer's kernel (kernel_regularizer), 
+# layer's bias (bias_regularizer) or layer's output (activity_regularizer).
+# Here we will apply the penalty on the coding layer output.
 kld_reg = KLDivergenceRegularizer(weight=0.05, target=0.1)
 sparse_kl_encoder = keras.models.Sequential([
     keras.layers.Flatten(input_shape=[28, 28]),
@@ -115,8 +121,9 @@ sparse_kl_decoder = keras.models.Sequential([
 ])
 sparse_kl_ae = keras.models.Sequential([sparse_kl_encoder, sparse_kl_decoder])
 
-sparse_kl_ae.compile(loss="binary_crossentropy", optimizer=keras.optimizers.SGD(lr=1.0),
-              metrics=[utils.rounded_accuracy])
+sparse_kl_ae.compile(loss="binary_crossentropy", 
+                     optimizer=keras.optimizers.SGD(lr=1.0),
+                     metrics=[utils.rounded_accuracy])
 
 history = sparse_kl_ae.fit(X_train, X_train, epochs=10,
                            validation_data=(X_valid, X_valid))    

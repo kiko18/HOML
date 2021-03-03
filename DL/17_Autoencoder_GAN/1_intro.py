@@ -71,6 +71,7 @@ efficiently.
 Just like the chess players in this memory experiment, an autoencoder looks at the
 inputs, converts them to an efficient latent representation, and then spits out something
 that (hopefully) looks very close to the inputs. 
+
 An autoencoder is always composed of two parts: 
     an encoder (or recognition network) that converts the inputs to a latent representation, 
     followed by a decoder (or generative network) that converts the internal representation 
@@ -135,11 +136,21 @@ plt.plot(codings[:,0], codings[:, 1], "b.")
 plt.xlabel("$z_1$", fontsize=18)
 plt.ylabel("$z_2$", fontsize=18, rotation=0)
 plt.grid(True)
+plt.title('2D projection with max variance')
 plt.show()
 
 # Comparing with the original 3D dataset, you can see that, the autoencoder
 # found the best 2D plane to project the data onto, preserving as much variance
 # in the data as it could (just like PCA)
+from mpl_toolkits.mplot3d import Axes3D
+fig = plt.figure(figsize=(4,3))
+ax = Axes3D(fig)
+ax.scatter(X_train[:,0], X_train[:, 1], X_train[:, 2],  c = 'r', marker='o')
+plt.xlabel("$X$", fontsize=18)
+plt.ylabel("$Y$", fontsize=18, rotation=0)
+ax.set_zlabel("$Z$", fontsize=18, rotation=0)
+plt.title('original 3D dataset')
+plt.show()
 
 #You can think of autoencoders as a form of self-supervised learning
 #(i.e., using a supervised learning technique with automatically generated

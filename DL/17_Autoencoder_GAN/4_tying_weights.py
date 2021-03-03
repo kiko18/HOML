@@ -20,14 +20,14 @@ It is common to tie the weights of the encoder and the decoder, by simply using 
 of the encoder's weights as the decoder weights. For this, we need to use a custom layer.
 
 This halves the number of weights in the model, speeding up training and limiting
-the risk of overfitting
+the risk of overfitting.
 '''
 
 '''
 This custom layer acts like a regular Dense layer, but it uses another Dense layer’s
 weights, transposed (setting transpose_b=True is equivalent to transposing the second
 argument, but it’s more efficient as it performs the transposition on the fly within
-the matmul() operation). However, it uses its own bias vector
+the matmul() operation). However, it uses its own bias vector.
 '''
 class DenseTranspose(keras.layers.Layer):
     def __init__(self, dense, activation=None, **kwargs):
@@ -42,7 +42,7 @@ class DenseTranspose(keras.layers.Layer):
         super().build(batch_input_shape)
         
     def call(self, inputs):
-        z = tf.matmul(inputs, self.dense.weights[0], transpose_b=True)
+        z = tf.matmul(inputs, self.dense.weights[0], transpose_b=True) #transposing the second argument
         return self.activation(z + self.biases)
 
 

@@ -33,7 +33,7 @@ switched-off inputs, just like in dropout.
 # The implementation is straightforward: it is a regular stacked autoencoder with an
 # additional Dropout layer applied to the encoder’s inputs (or you could use a 
 # GaussianNoise layer instead). Recall that the Dropout layer is only active during 
-# training (and so is the GaussianNoise layer)
+# training (and so is the GaussianNoise layer).
 
 import tensorflow as tf
 from tensorflow import keras
@@ -54,7 +54,7 @@ y_train, y_valid = y_train_full[:-5000], y_train_full[-5000:]
 # Encoder
 denoising_encoder = keras.models.Sequential([
     keras.layers.Flatten(input_shape=[28, 28]),
-    keras.layers.Dropout(0.5),      #(a)  #oisy images (with half the pixels turned off),
+    keras.layers.Dropout(0.5),      #(a)  #noisy images (with half the pixels turned off),
     #keras.layers.GaussianNoise(0.2), #(1)              
     keras.layers.Dense(100, activation="selu"),
     keras.layers.Dense(30, activation="selu")
@@ -83,6 +83,9 @@ utils.show_reconstructions(denoising_ae, noise(X_valid, training=True))
 plt.show()
 
 '''
+The figure shows a few noisy images on top (with half the pixels turned off), and the images 
+reconstructed by the dropout-based denoising autoencoder (bottom).
+
 Notice how the autoencoder guesses details that are actually not in the (validation )input, 
 such as the top of the white shirt (bottom row, fourth image). 
 

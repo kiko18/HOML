@@ -67,7 +67,8 @@ simple_decoder = keras.models.Sequential([
 # Simple AE
 simple_ae = keras.models.Sequential([simple_encoder, simple_decoder])
 
-simple_ae.compile(loss="binary_crossentropy", optimizer=keras.optimizers.SGD(lr=1.),
+simple_ae.compile(loss="binary_crossentropy", 
+                  optimizer=keras.optimizers.SGD(lr=1.0),
                   metrics=[utils.rounded_accuracy])
 
 history = simple_ae.fit(X_train, X_train, epochs=10,

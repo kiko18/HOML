@@ -19,6 +19,7 @@ import utils
 '''
 Just like other neural networks we have discussed, autoencoders can have multiple
 hidden layers. In this case they are called stacked autoencoders (or deep autoencoders).
+
 Adding more layers helps the autoencoder learn more complex codings. That said,
 one must be careful not to make the autoencoder too powerful. Imagine an encoder
 so powerful that it just learns to map each input to a single arbitrary number (and the

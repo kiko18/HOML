@@ -11,6 +11,9 @@ Training One Autoencoder at a Time
 Rather than training the whole stacked autoencoder in one go like we just did, it is
 possible to train one shallow autoencoder at a time, then stack all of them into a single
 stacked autoencoder (hence the name).
+
+This technique is not used as much these days, but you may still run into papers that 
+talk about “greedy layerwise training,” so it’s good to know what it means.
 '''
 
 import sklearn
@@ -99,8 +102,8 @@ can be pretrained in an unsupervised fashion, using this greedy layerwise
 approach. They used restricted Boltzmann machines (RBMs; see Appendix E) for this
 purpose. 
 
-In 2007 Yoshua Bengio et al. showed3 that autoencoders worked just as
-well. For several years this was the only efficient way to train deep nets, until many of
+In 2007 Yoshua Bengio et al. showed that autoencoders worked just as well. 
+For several years this was the only efficient way to train deep nets, until many of
 the techniques introduced in Chapter 11 made it possible to just train a deep net in
 one shot.
 '''

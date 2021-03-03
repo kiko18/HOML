@@ -5,7 +5,6 @@ Created on Sat Jan  9 20:48:00 2021
 @author: BT
 """
 
-
 '''
 If you are dealing with images, then the autoencoders we have seen so far will not
 work well (unless the images are very small). If you want to build an autoencoder 
