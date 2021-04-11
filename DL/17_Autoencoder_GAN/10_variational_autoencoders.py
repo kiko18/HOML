@@ -46,11 +46,15 @@ decode it, and voilà!
 
 VA Cost Function
 ----------------
-It is composed of two parts. The first is the usual reconstruction loss that pushes the 
-autoencoder to reproduce its inputs (we can use cross entropy for this, as discussed earlier). 
-The second is the latent loss that pushes the autoencoder to have codings that look as though 
-they were sampled from a simple Gaussian distribution: it is the KL divergence between the target 
-distribution (i.e., the Gaussian distribution) and the actual distribution of the codings. 
+It is composed of two parts.
+
+- The reconstruction loss: that pushes the autoencoder to reproduce its inputs (we can use 
+                           cross entropy for this, as discussed earlier). 
+- The latent loss (KLD): pushes the autoencoder to have codings that look as though  they were 
+                         sampled from a simple Gaussian distribution: it is the KL divergence 
+                         between the target distribution (i.e., the Gaussian distribution) and 
+                         the actual distribution of the codings. 
+
 The math is a bit more complex than with the sparse autoencoder, in particular because of the 
 Gaussian noise, which limits the amount of information that can be transmitted to the
 coding layer (thus pushing the autoencoder to learn useful features). 
@@ -60,10 +64,9 @@ Luckily, the equations simplify, so the latent loss can be computed quite simply
     L = -1/2 [ sum (1 + log((σ_i)^2) - (σ_i)^2 - (mu_i)^2) ]
                i=1
 
-In this equation, L is the latent loss, K is the codings’ dimensionality, μi and σi are
-the mean and standard deviation of the ith component of the codings. The vectors μ
-and σ (which contain all the μi and σi) are output by the encoder, as shown in
-Figure 17-12 (left).
+In this equation, L is the latent loss, K is the codings’ dimensionality, μ_i and σ_i are
+the mean and standard deviation of the i-th component of the codings. The vectors μ and σ 
+(which contain all the μ_i and σ_i) are output by the encoder, as shown in Figure 17-12 (left).
 
 A common tweak to the variational autoencoder’s architecture is to make the encoder
 output γ = log(σ^2) rather than σ. The latent loss can then be computed as:
@@ -101,7 +104,7 @@ y_train, y_valid = y_train_full[:-5000], y_train_full[-5000:]
 class Sampling(keras.layers.Layer):
     # This Sampling layer takes two inputs: mean (μ) and log_var (γ). It uses the function
     # K.random_normal() to sample a random vector (of the same shape as γ) from the
-    # Normal distribution, with mean 0 and standard deviation 1. Then it multiplies it by
+    # normal distribution, with mean 0 and standard deviation 1. Then it multiplies it by
     # exp(γ / 2) (which is equal to σ, as you can verify), and finally it adds μ and returns the
     # result. This samples a codings vector from the Normal distribution with mean μ and
     # standard deviation σ.
@@ -109,9 +112,26 @@ class Sampling(keras.layers.Layer):
         mean, log_var = inputs
         return K.random_normal(tf.shape(log_var)) * K.exp(log_var / 2) + mean
 
+
+class Sampling_(keras.layers.Layer):
+    """Each digit is encoded by a vector z (the latent representation).
+       z is sampled from the normal distribution with mean z_mean and
+       standard deviation z_log_var (which is equal to σ, as you can verify).
+       So we use (z_mean, z_log_var) to sample z, the vector encoding a digit."""
+
+    # This Sampling layer takes two inputs: mean (μ) and log_var (γ). It uses the function
+    # K.random_normal() to sample a random vector (of the same shape as γ) from the
+    # normal distribution, with mean 0 and standard deviation 1.
+    def call(self, inputs):
+        z_mean, z_log_var = inputs 
+        batch = tf.shape(z_mean)[0]
+        dim = tf.shape(z_mean)[1]
+        epsilon = tf.keras.backend.random_normal(shape=(batch, dim))
+        return z_mean + tf.exp(0.5 * z_log_var) * epsilon #reparametrisation trick: z = μ + σ * epsilon
+    
 # Encoder
 # we use the Functional API because the model is not entirely sequential
-codings_size = 10
+codings_size = 10 #latent_dim
 
 inputs = keras.layers.Input(shape=[28, 28])
 z = keras.layers.Flatten()(inputs)
@@ -121,26 +141,28 @@ z = keras.layers.Dense(100, activation="selu")(z)
 #have the same inputs (i.e., the outputs of the second Dense layer). 
 codings_mean = keras.layers.Dense(codings_size)(z)
 codings_log_var = keras.layers.Dense(codings_size)(z)
-# We then pass both codings_mean and codings_log_var to the Sampling layer. 
+# We then pass both codings_mean and codings_log_var to the Sampling layer, which 
+# samples a codings vector from the Normal distribution with mean μ and standard deviation σ
 codings = Sampling()([codings_mean, codings_log_var])
-# Finally, the varia tional_encoder model has three outputs (in case you want to inspect 
+# Finally, the variational_encoder model has three outputs (in case you want to inspect 
 # the values of codings_mean and codings_log_var. 
 # The only output we will use is the last one (codings).
 variational_encoder = keras.models.Model(inputs=[inputs], 
-                                         outputs=[codings_mean, codings_log_var, codings])
+                                         outputs=[codings_mean, codings_log_var, codings], name="encoder")
+variational_encoder.summary()
 
- 
+print(" \n ") 
 # Decoder
+# For this decoder, we could have used the Sequential API instead of the Functional API, 
+# since it is really just a simple stack of layers, virtually identical to many of the
+# decoders we have built so far. Finally, let’s build the variational autoencoder model
 decoder_inputs = keras.layers.Input(shape=[codings_size])
 x = keras.layers.Dense(100, activation="selu")(decoder_inputs)
 x = keras.layers.Dense(150, activation="selu")(x)
 x = keras.layers.Dense(28 * 28, activation="sigmoid")(x)
 outputs = keras.layers.Reshape([28, 28])(x)
-variational_decoder = keras.models.Model(inputs=[decoder_inputs], outputs=[outputs])
-
-# For this decoder, we could have used the Sequential API instead of the Functional API, 
-# since it is really just a simple stack of layers, virtually identical to many of the
-# decoders we have built so far. Finally, let’s build the variational autoencoder model
+variational_decoder = keras.models.Model(inputs=[decoder_inputs], outputs=[outputs], name="decoder")
+variational_decoder.summary()
 
 # Variational Autoencoder (VA) model
 _, _, codings = variational_encoder(inputs)

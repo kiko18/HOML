@@ -44,8 +44,7 @@ y_train, y_valid = y_train_full[:-5000], y_train_full[-5000:]
 def rounded_accuracy(y_true, y_pred):
     return keras.metrics.binary_accuracy(tf.round(y_true), tf.round(y_pred))
 
-#Let's build a stacked Autoencoder with 3 hidden layers 
-#and 1 output layer (i.e., 2 stacked Autoencoders).
+#Let's build a stacked Autoencoder with 3 hidden layers and 1 output layer.
 #we split the autoencoder model into two submodels: the encoder and the decoder.
 
 #The encoder takes 28 × 28–pixel grayscale images, flattens them so that each
@@ -93,7 +92,7 @@ and the outputs: the differences should not be too significant. Let’s plot a f
 images from the validation set, as well as their reconstructions.
 '''
         
-utils.show_reconstructions(stacked_ae)
+utils.show_reconstructions(stacked_ae, X_valid)
 #save_fig("reconstruction_plot")        
 
 # The reconstructions are recognizable, but a bit too lossy. 
@@ -133,8 +132,6 @@ X_valid_2D = (X_valid_2D - X_valid_2D.min()) / (X_valid_2D.max() - X_valid_2D.mi
 plt.scatter(X_valid_2D[:, 0], X_valid_2D[:, 1], c=y_valid, s=10, cmap="tab10")
 plt.axis("off")
 plt.show()
-
-
 
 
 #Let's make this diagram a bit prettier:

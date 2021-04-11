@@ -11,13 +11,15 @@ Implementing a ResNet-34 CNN Using Keras
 Most CNN architectures are fairly straightforward to implement.
 (although generally you would load a pretrained network instead, as we will see). 
 To illustrate the process, let’s implement a ResNet-34 from scratch using Keras. 
-First, we create a ResidualUnit layer, then webuild the resnet using a sequential model.
+First, we create a ResidualUnit layer, then we build the resnet using a sequential model.
 
 It is quite amazing that in less than 40 lines of code, we can build the model that won
 the ILSVRC 2015 challenge! It demonstrates both the elegance of the ResNet model,
 and the expressiveness of the Keras API. Implementing the other CNN architectures
 is not much harder. However, Keras comes with several of these architectures built in,
 so why not use them instead?
+
+https://neurohive.io/en/popular-networks/resnet/
 '''
 import tensorflow as tf
 import numpy as np
@@ -42,7 +44,7 @@ X_valid, X_train = X_train_full[:5000], X_train_full[5000:]
 y_valid, y_train = y_train_full[:5000], y_train_full[5000:]    
     
     
-DefaultConv2D = partial(tf.keras.layers.Conv2D, kernel_size=3, strides=1,
+DefaultConv2D = partial(tf.keras.layers.Conv2D, kernel_size=3, strides=1, 
                         padding="SAME", use_bias=False)
 
 class ResidualUnit(tf.keras.layers.Layer):
@@ -72,23 +74,27 @@ class ResidualUnit(tf.keras.layers.Layer):
 
 # Now, we can build the resnet using a sequential model
 # we can treat each residual unit as a single layer
-model = tf.keras.models.Sequential()
-model.add(DefaultConv2D(64, kernel_size=7, strides=2, input_shape=[32, 32, 3]))#[224, 224, 3]))
-model.add(tf.keras.layers.BatchNormalization())
-model.add(tf.keras.layers.Activation("relu"))
-model.add(tf.keras.layers.MaxPool2D(pool_size=3, strides=2, padding="SAME"))
+inputs = tf.keras.Input(shape=(32, 32, 3))
+x = DefaultConv2D(64, kernel_size=7, strides=2, input_shape=[32, 32, 3])(inputs)
+x = tf.keras.layers.BatchNormalization()(x)
+x = tf.keras.layers.Activation("relu")(x)
+x = tf.keras.layers.MaxPool2D(pool_size=3, strides=2, padding="SAME")(x)
+
 prev_filters = 64
 # the first 3 Residual unit (RU) has 64 filterd
 # then the next 4 RU has 128 filters, and so on
 for filters in [64] * 3 + [128] * 4 + [256] * 6 + [512] * 3:
     # we set the stride to 1 if the number of filters is the same as in the previous RU
     strides = 1 if filters == prev_filters else 2
-    model.add(ResidualUnit(filters, strides=strides))   #add the residual unit
+    x = ResidualUnit(filters, strides=strides)(x)   #add the residual unit
     prev_filters = filters                              #update the previous filterss
-model.add(tf.keras.layers.GlobalAvgPool2D())
-model.add(tf.keras.layers.Flatten())
-model.add(tf.keras.layers.Dense(10, activation="softmax"))
 
+x = tf.keras.layers.GlobalAvgPool2D()(x)
+x = tf.keras.layers.Flatten()(x)
+model_output = tf.keras.layers.Dense(10, activation="softmax")(x)
+
+model = tf.keras.Model(inputs, model_output, name="reset-34")
+model.summary()
 
 # compile and train the model
 model.compile(loss="sparse_categorical_crossentropy", optimizer="nadam", metrics=["accuracy"])

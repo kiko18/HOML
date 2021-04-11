@@ -55,9 +55,8 @@ that the generator and the discriminator compete against each other during
 training: the generator is often compared to a criminal trying to make realistic
 counterfeit money, while the discriminator is like the police investigator trying to
 tell real money from fake. Adversarial training (training competing neural networks)
-is widely considered as one of the most important ideas in recent years. In
-2016, Yann LeCun even said that it was “the most interesting idea in the last 10
-years in Machine Learning.”
+is widely considered as one of the most important ideas in recent years. In 2016, 
+Yann LeCun even said that it was “the most interesting idea in the last 10 years in ML.”
 
 How Auto encoder works
 ----------------------
@@ -68,9 +67,10 @@ However, this is only the case when the pieces are placed in realistic positions
 have a much better memory than you and I; they just see chess patterns more easily,
 thanks to their experience with the game. Noticing patterns helps them store information
 efficiently.
-Just like the chess players in this memory experiment, an autoencoder looks at the
-inputs, converts them to an efficient latent representation, and then spits out something
-that (hopefully) looks very close to the inputs. 
+
+Just like the chess players in this memory experiment, an autoencoder looks at the inputs, 
+converts them to an efficient latent representation, and then spits out something that 
+(hopefully) looks very close to the inputs. 
 
 An autoencoder is always composed of two parts: 
     an encoder (or recognition network) that converts the inputs to a latent representation, 
@@ -113,7 +113,6 @@ projecting it to 2D
 # to make this notebook's output stable across runs
 np.random.seed(42)
 tf.random.set_seed(42)
-
 
 #Build 3D dataset:
 X_train = utils.generate_3d_data(60)

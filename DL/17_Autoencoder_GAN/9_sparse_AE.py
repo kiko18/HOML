@@ -24,7 +24,7 @@ try to make them worth listening to).
 To sparsify the coding layer, a simple approach is to use the sigmoid activation function 
 in the coding layer (to constrain the codings to values between 0 and 1), 
 use a large coding layer (e.g., with 300 units), and add some ℓ1 regularization to the 
-coding layer’s activations (the decoder is just a regular decoder)
+coding layer’s activations (the decoder is just a regular decoder).
 '''
 
 import tensorflow as tf
@@ -79,7 +79,7 @@ utils.show_reconstructions(simple_ae, X_valid)
 plt.show()
   
 
-# Let's  plot histograms of the activations of the encoding layer. 
+# Let's plot histograms of the activations of the encoding layer. 
 # The histogram on the left shows the distribution of all the activations. 
 # You can see that values close to 0 or 1 are more frequent overall, which is consistent 
 # with the saturating nature of the sigmoid function. 
